@@ -10,6 +10,7 @@ import warnings
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 from matplotlib.ticker import FuncFormatter
 import streamlit as st
@@ -365,6 +366,7 @@ def generate_population(n_episodic_treated, n_episodic_untreated, n_chronic_trea
         population.append(Patient(is_chronic=True, is_treated=False))
     return population
 
+
 def calculate_group_data(population, groups_simulated):
     intensities = np.arange(0, 10.1, 0.1)
     group_data = []
@@ -383,6 +385,7 @@ def calculate_group_data(population, groups_simulated):
     for group_name, condition, n_patients in groups_simulated:
         group_patients = [p for p in population if condition(p)]
         total_intensity_minutes = {}
+        intensity_minutes_list = {round(i, 1): [] for i in intensities}
         group_total_attacks = []
         group_intensities = []
         
@@ -392,21 +395,19 @@ def calculate_group_data(population, groups_simulated):
             
             patient_intensity_minutes = patient.calculate_intensity_minutes()
             for intensity, minutes in patient_intensity_minutes.items():
-                total_intensity_minutes[intensity] = total_intensity_minutes.get(intensity, 0) + minutes
+                rounded_intensity = round(intensity, 1)
+                total_intensity_minutes[rounded_intensity] = total_intensity_minutes.get(rounded_intensity, 0) + minutes
+                intensity_minutes_list[rounded_intensity].append(minutes)
                 group_intensities.extend([intensity] * int(minutes))
         
         intensity_minutes_average = [total_intensity_minutes.get(round(i, 1), 0) / n_patients for i in intensities]
+        intensity_minutes_std = [np.std(intensity_minutes_list[round(i, 1)]) if intensity_minutes_list[round(i, 1)] else 0 for i in intensities]
         intensity_minutes_total = [total_intensity_minutes.get(round(i, 1), 0) for i in intensities]
-        group_data.append((group_name, intensity_minutes_average, intensity_minutes_total, n_patients))
+        group_data.append((group_name, intensity_minutes_average, intensity_minutes_std, intensity_minutes_total, n_patients))
         
-        # Calculate statistics
+        # Calculate statistics (without printing)
         attack_stats = np.percentile(group_total_attacks, [25, 50, 75])
         intensity_stats = np.percentile(group_intensities, [25, 50, 75])
-        
-        print(f"{group_name}: N={n_patients}")
-        print(f"Attacks - Mean: {np.mean(group_total_attacks):.0f}, Median: {attack_stats[1]:.0f}, IQR: [{attack_stats[0]:.0f}, {attack_stats[2]:.0f}]")
-        print(f"Intensity - Mean: {np.mean(group_intensities):.1f}, Median: {intensity_stats[1]:.1f}, IQR: [{intensity_stats[0]:.1f}, {intensity_stats[2]:.1f}]")
-        print()
         
         if 'Chronic' in group_name:
             chronic_attacks.extend(group_total_attacks)
@@ -424,13 +425,6 @@ def calculate_group_data(population, groups_simulated):
             all_untreated_attacks.extend(group_total_attacks)
             all_untreated_intensities.extend(group_intensities)
     
-    # Print aggregate statistics
-    print("\nAggregate Statistics:")
-    print_aggregate_stats("All Treated", all_treated_attacks, all_treated_intensities)
-    print_aggregate_stats("All Untreated", all_untreated_attacks, all_untreated_intensities)
-    print_aggregate_stats("All Episodic", all_episodic_attacks, all_episodic_intensities)
-    print_aggregate_stats("All Chronic", all_chronic_attacks, all_chronic_intensities)
-    
     return intensities, group_data
 
 def print_aggregate_stats(group_name, attacks, intensities):
@@ -441,6 +435,138 @@ def print_aggregate_stats(group_name, attacks, intensities):
     print(f"Intensity - Mean: {np.mean(intensities):.1f}, Median: {intensity_stats[1]:.1f}, IQR: [{intensity_stats[0]:.1f}, {intensity_stats[2]:.1f}]")
     print()
 
+def create_plot(fig, data, intensities, colors, markers, is_global=False):
+    for i, (name, values, std) in enumerate(data):
+        color = colors[i % len(colors)]
+        rgb_color = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+        marker = markers[i % len(markers)]
+        
+        # Lower bound of shaded area
+        fig.add_trace(go.Scatter(
+            x=intensities,
+            y=[max(0, v - s) for v, s in zip(values, std)],
+            mode='lines',
+            line=dict(width=0),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        
+        # Upper bound of shaded area
+        fig.add_trace(go.Scatter(
+            x=intensities,
+            y=[v + s for v, s in zip(values, std)],
+            mode='lines',
+            line=dict(width=0),
+            fill='tonexty',
+            fillcolor=f'rgba({rgb_color[0]},{rgb_color[1]},{rgb_color[2]},0.2)',
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        
+        # Main line with markers
+        fig.add_trace(go.Scatter(
+            x=intensities,
+            y=values,
+            mode='lines+markers',
+            name=name,
+            line=dict(color=color, width=2),
+            marker=dict(
+                symbol=marker,
+                size=[8 if x.is_integer() else 0 for x in intensities],
+                color=color,
+            ),
+            hoverinfo='x+y+name'
+        ))
+
+    title = 'Estimated Global Annual Person-Years Spent in Cluster Headaches by Intensity (±1σ)' if is_global else 'Average Person-Minutes per Year Spent at Different Pain Intensities (±1σ)'
+    y_title = 'Estimated Global Person-Years per Year' if is_global else 'Average Person-Minutes per Year'
+    y_format = ',.0f'
+
+    fig.update_layout(
+        title=title,
+        xaxis_title='Pain Intensity',
+        yaxis_title=y_title,
+        xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+        yaxis=dict(tickformat=y_format),
+        legend_title_text='',
+        hovermode='closest',
+        template='plotly_dark',
+        legend=dict(
+            itemsizing='constant',
+            itemwidth=30,
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01,
+            bgcolor="rgba(0,0,0,0.5)",  # Semi-transparent background
+            bordercolor="white",
+            borderwidth=1
+        )
+    )
+
+    return fig
+
+# Function to create bar plot
+def create_bar_plot(groups, values, errors, title, y_title):
+    
+    # Create color map
+    color_map = {
+        'Episodic Treated': px.colors.qualitative.Plotly[0],
+        'Episodic Untreated': px.colors.qualitative.Plotly[1],
+        'Chronic Treated': px.colors.qualitative.Plotly[2],
+        'Chronic Untreated': px.colors.qualitative.Plotly[3]
+    }
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=groups,
+            y=values,
+            error_y=dict(type='data', array=errors, visible=True),
+            marker=dict(
+                color=[color_map[group] for group in groups],
+                opacity=0.7,
+                line=dict(width=1, color='white')
+            )
+        )
+    ])
+    
+    fig.update_layout(
+        title=title,
+        yaxis_title=y_title,
+        template='plotly_dark',
+        yaxis=dict(tickformat=',.0f'),
+        showlegend=False,
+        bargap=0.3
+    )
+    return fig
+
+def create_comparison_plot(bar_values, bar_errors):
+    bar_labels = ['Total Person-Years', 'Person-Years at ≥9/10 Intensity']
+
+    fig_comparison = go.Figure(data=[
+        go.Bar(
+            x=bar_labels,
+            y=bar_values,
+            error_y=dict(type='data', array=bar_errors, visible=True),
+            marker=dict(
+                color=['blue', 'red'],
+                opacity=0.7,
+                line=dict(width=1, color='white')
+            )
+        )
+    ])
+
+    fig_comparison.update_layout(
+        title='Comparison of Total and ≥9/10 Intensity Person-Years Across All Groups',
+        yaxis_title='Person-Years',
+        template='plotly_dark',
+        yaxis=dict(tickformat=',.0f'),
+        showlegend=False,
+        bargap=0.3
+    )
+
+    return fig_comparison
+    
 # ## Streamlit app
 def main():
     st.title("Cluster Headache Simulation")
@@ -505,17 +631,15 @@ def main():
         # Run your simulation
         population = generate_population(n_episodic_treated, n_episodic_untreated, n_chronic_treated, n_chronic_untreated)
         intensities, group_data = calculate_group_data(population, groups_simulated)
-
-        # Display results
-        st.subheader("Simulation Results")
         
         # Convert data to a format suitable for Plotly
         df_list = []
         global_minutes = {}
-        for name, avg, total, n in group_data:
+        for name, avg, std, total, n in group_data:
             df_list.append(pd.DataFrame({
                 'intensity': intensities,
                 'average_minutes': avg,
+                'std_minutes': std,
                 'total_minutes': total,
                 'group': name
             }))
@@ -523,56 +647,83 @@ def main():
             global_total = ch_groups[name]
             global_minutes[name] = [a * global_total for a in avg]
         df = pd.concat(df_list)
-
-        # Create and display average minutes plot
-        fig_avg = px.line(df, x='intensity', y='average_minutes', color='group',
-                  title='Average Minutes per Year Spent at Different Max Pain Intensities')
-
-        fig_avg.update_layout(
-            xaxis_title='Max Pain Intensity',
-            yaxis_title='Average Minutes',
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),  # Set x-axis ticks to steps of 1
-            yaxis=dict(tickformat=','),  # Add commas to y-axis labels
-            legend_title_text=''  # Remove the "group" word from legend title
-        )
-
+    
+        # Create and display average minutes plot with confidence interval
+        fig_avg = go.Figure()
+        avg_data = [(name, avg, std) for name, avg, std, _, _ in group_data]
+        fig_avg = create_plot(fig_avg, avg_data, intensities, px.colors.qualitative.Plotly, ['circle', 'square', 'diamond', 'cross'])
         st.plotly_chart(fig_avg)
-
+    
         # Create and display global estimated minutes plot
         # Calculate person-years for each group and intensity
-        for name in global_minutes:
-            global_minutes[name] = [mins / (60 * 24 * 365) for mins in global_minutes[name]]
+        global_person_years = {}
+        global_std_person_years = {}
+        for name, avg, std, _, _ in group_data:
+            global_total = ch_groups[name]
+            global_person_years[name] = [(a * global_total) / (60 * 24 * 365) for a in avg]
+            global_std_person_years[name] = [(s * global_total) / (60 * 24 * 365) for s in std]
         
-        # Create DataFrame for global person-years
-        df_global = pd.DataFrame({
-            'intensity': intensities,
-            **{name: global_minutes[name] for name in ch_groups.keys()}
-        })
-        df_global_melted = df_global.melt(id_vars=['intensity'], var_name='group', value_name='global_person_years')
-        
-        # Create and display global estimated person-years plot
-        fig_global = px.line(df_global_melted, x='intensity', y='global_person_years', color='group',
-                             title='Estimated Global Annual Person-Years Spent in CH by Intensity')
-        
-        fig_global.update_layout(
-            xaxis_title='Max Pain Intensity',
-            yaxis_title='Estimated Global Person-Years per Year',
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),  # Set x-axis ticks to steps of 1
-            yaxis=dict(tickformat=',.0f'),  # Add commas to y-axis labels and remove decimal places
-            legend_title_text=''  # Remove the "group" word from legend title
-        )
-        
+        fig_global = go.Figure()
+        global_data = [(name, global_person_years[name], global_std_person_years[name]) for name in ch_groups.keys()]
+        fig_global = create_plot(fig_global, global_data, intensities, px.colors.qualitative.Plotly, ['circle', 'square', 'diamond', 'cross'], is_global=True)
         st.plotly_chart(fig_global)
         
-        # Calculate and display total person-years
-        total_person_years = {group: sum(years) for group, years in global_minutes.items()}
-        st.subheader("Estimated total person-years spent in CH annually:")
-        for group, years in total_person_years.items():
-            st.write(f"{group}: {years:,.0f} person-years")
+        # Calculate individual intensity person-years, high-intensity person-years, and their standard deviations
+        total_person_years = {}
+        high_intensity_person_years = {}
+        total_std = {}
+        high_intensity_std = {}
         
-        # Display total person-years across all groups
-        grand_total_person_years = sum(total_person_years.values())
-        st.write(f"Total across all groups: {grand_total_person_years:,.0f} person-years")
+        for name in global_person_years.keys():
+            years = global_person_years[name]
+            std = global_std_person_years[name]
+            
+            total_years = sum(years)
+            high_intensity_years = sum(years[90:])  # Sum years for intensities 9 and 10 (indices 90-100)
+            
+            # Calculate standard deviations using error propagation
+            total_std[name] = np.sqrt(sum([s**2 for s in std]))
+            high_intensity_std[name] = np.sqrt(sum([s**2 for s in std[90:]]))
+            
+            total_person_years[name] = total_years
+            high_intensity_person_years[name] = high_intensity_years
+        
+        # Prepare data for both bar plots
+        groups = list(total_person_years.keys())
+        total_values = list(total_person_years.values())
+        high_intensity_values = list(high_intensity_person_years.values())
+        total_error = list(total_std.values())
+        high_intensity_error = list(high_intensity_std.values())
+        
+        # Create and display total person-years plot
+        fig_total = create_bar_plot(groups, total_values, total_error, 'Total Estimated Person-Years Spent in Cluster Headaches Annually by Group', 'Total Person-Years')
+        st.plotly_chart(fig_total)
+        
+        # Create and display high-intensity person-years plot
+        fig_high_intensity = create_bar_plot(groups, high_intensity_values, high_intensity_error, 'Estimated Person-Years Spent in Cluster Headaches Annually by Group (Intensity ≥9/10)', 'Person-Years (Intensity ≥9/10)')
+        st.plotly_chart(fig_high_intensity)
+
+        # Calculate total person-years for all groups
+        total_all_groups = sum(total_person_years.values())
+        total_all_groups_std = np.sqrt(sum([std**2 for std in total_std.values()]))
+        
+        # Calculate high-intensity person-years for all groups
+        high_intensity_all_groups = sum(high_intensity_person_years.values())
+        high_intensity_all_groups_std = np.sqrt(sum([std**2 for std in high_intensity_std.values()]))
+        
+        # Prepare data for the bar plot
+        bar_values = [total_all_groups, high_intensity_all_groups]
+        bar_errors = [total_all_groups_std, high_intensity_all_groups_std]
+        
+        # Call the plotting function
+        fig_comparison = create_comparison_plot(bar_values, bar_errors)
+        
+        # Display the plot
+        st.plotly_chart(fig_comparison)
+        
+        # Print the values
+        st.write(f"Total Person-Years: {total_all_groups:,.0f} ± {total_all_groups_std:,.0f}")
+        st.write(f"Person-Years at ≥9/10 Intensity: {high_intensity_all_groups:,.0f} ± {high_intensity_all_groups_std:,.0f}")
 
 if __name__ == "__main__":
     main()
