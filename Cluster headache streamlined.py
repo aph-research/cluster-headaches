@@ -3,49 +3,18 @@
 
 # # Cluster headache simulations: Streamlined full model
 
-# In[3]:
-
-
 import numpy as np
 from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon
 from scipy.optimize import minimize, curve_fit
 import warnings
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+import plotly.express as px
+import pandas as pd
 from matplotlib.ticker import FuncFormatter
 import streamlit as st
 
-
-# ## Global statistics
-
-# In[4]:
-
-
-# Define the overall population
-annual_prevalence = 53/100000 # 53 per 100,000 (95% CI: 26, 95) of adults
-world_population = 8_200_000_000
-adult_fraction = 0.72
-total_ch_sufferers = world_population * adult_fraction * annual_prevalence # Estimated global CH sufferers
-
-# Define the proportions for each group
-prop_episodic = 0.80
-prop_chronic = 1 - prop_episodic
-prop_treated = 0.48
-prop_untreated = 1 - prop_treated
-
-# Define the groups
-ch_groups = {
-    'Episodic Treated': int(total_ch_sufferers * prop_episodic * prop_treated),
-    'Episodic Untreated': int(total_ch_sufferers * prop_episodic * prop_untreated),
-    'Chronic Treated': int(total_ch_sufferers * prop_chronic * prop_treated),
-    'Chronic Untreated': int(total_ch_sufferers * prop_chronic * prop_untreated)
-}
-
-
 # ## Annual bout frequency for episodic patients
-
-# In[5]:
-
 
 data = {
     # Discretized approximation for a distribution with mean 1.2, SD 1.1
@@ -92,9 +61,6 @@ bouts_per_year = rv_discrete(values=(list(combined_dist.keys()), list(combined_d
 
 
 # ## Bout duration for episodic patients
-
-# In[6]:
-
 
 data = []
 sample_sizes = []
@@ -155,9 +121,6 @@ optimal_mu, optimal_sigma = result.x
 
 
 # ## Modeling attacks per day for both episodic and chronic CH sufferers
-
-# In[7]:
-
 
 def fit_lognormal(mean, std):
     """
@@ -223,9 +186,6 @@ chronic_untreated_mu, chronic_untreated_sigma = fit_lognormal(chronic_untreated_
 
 # ## Simulating active days for chronic patients
 
-# In[8]:
-
-
 def generate_chronic_active_days():
     while True:
         # Generate total attack days in a year
@@ -238,9 +198,6 @@ def generate_chronic_active_days():
 
 
 # ## Simulating attack durations
-
-# In[9]:
-
 
 def generate_attack_duration(is_chronic, is_treated, max_intensities, size):
     # Base parameters for lognormal distribution
@@ -283,9 +240,6 @@ def generate_attack_duration(is_chronic, is_treated, max_intensities, size):
 
 # ## Simulating max pain intensity
 
-# In[10]:
-
-
 def generate_max_pain_intensity(is_treated, size):
     
     mean_mild_moderate = 4.0
@@ -312,9 +266,6 @@ def generate_max_pain_intensity(is_treated, size):
 
 
 # ## Defining classes for attacks and patients
-
-# In[11]:
-
 
 @dataclass
 class Attack:
@@ -400,10 +351,7 @@ class Patient:
         return intensity_minutes
 
 
-# ## Running some simulations
-
-# In[22]:
-
+# ## Functions to run the simulations
 
 def generate_population(n_episodic_treated, n_episodic_untreated, n_chronic_treated, n_chronic_untreated):
     population = []
@@ -492,61 +440,64 @@ def print_aggregate_stats(group_name, attacks, intensities):
     print(f"Attacks - Mean: {np.mean(attacks):.0f}, Median: {attack_stats[1]:.0f}, IQR: [{attack_stats[0]:.0f}, {attack_stats[2]:.0f}]")
     print(f"Intensity - Mean: {np.mean(intensities):.1f}, Median: {intensity_stats[1]:.1f}, IQR: [{intensity_stats[0]:.1f}, {intensity_stats[2]:.1f}]")
     print()
-    
-def plot_data(intensities, group_data, y_label, title):
-    fig, ax = plt.subplots(figsize=(8, 6))
-    for group_name, intensity_minutes, _, _ in group_data:
-        ax.plot(intensities, intensity_minutes, label=group_name, linewidth=2)
-    
-    ax.set_xlabel('Max Pain Intensity')
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
-    ax.legend()
-    ax.grid(True, linestyle='--', alpha=0.7)
-    ax.set_xlim(0, 10)
-    ax.set_ylim(bottom=0)
-    
-    ax.set_xticks(range(11))
-    
-    for i in range(1, 11):
-        ax.axvline(x=i, color='gray', linestyle=':', alpha=0.5)
-    
-    def format_with_commas(x, p):
-        return f"{int(x):,}"
-    
-    ax.yaxis.set_major_formatter(FuncFormatter(format_with_commas))
-    
-    plt.tight_layout()
-    return fig
-
 
 # ## Streamlit app
-
-# In[23]:
-
-
 def main():
     st.title("Cluster Headache Simulation")
 
     # Sidebar for user inputs
     st.sidebar.header("Parameters")
+
+    # Add input for annual prevalence
+    annual_prevalence_per_100k = st.sidebar.number_input("Annual prevalence of CH sufferers (per 100,000)", 
+                                                         min_value=1, max_value=1000, value=53, step=1)
+    annual_prevalence = annual_prevalence_per_100k / 100000
+
+    # Constants and calculations
+    world_population = 8_200_000_000
+    adult_fraction = 0.72
+    total_ch_sufferers = world_population * adult_fraction * annual_prevalence
+
+    st.sidebar.write(f"Total annual CH sufferers worldwide: {int(total_ch_sufferers):,}")
     
     # Add sliders for key parameters
-    prop_chronic = st.sidebar.slider("Proportion of Chronic CH", 0.0, 1.0, 0.2)
-    prop_treated = st.sidebar.slider("Proportion of Treated Patients", 0.0, 1.0, 0.48)
-    n_patients = st.sidebar.slider("Number of Patients to Simulate", 100, 10000, 1000)
+    prop_chronic = st.sidebar.slider("Percentage of chronic patients", 0, 100, 20, format="%d%%") / 100
+    prop_treated = st.sidebar.slider("Percentage of treated patients", 0, 100, 48, format="%d%%") / 100
 
-    # Calculate patient numbers
-    n_episodic_treated = int(n_patients * (1 - prop_chronic) * prop_treated)
-    n_episodic_untreated = int(n_patients * (1 - prop_chronic) * (1 - prop_treated))
-    n_chronic_treated = int(n_patients * prop_chronic * prop_treated)
-    n_chronic_untreated = int(n_patients * prop_chronic * (1 - prop_treated))
+    prop_episodic = 1 - prop_chronic
+    prop_untreated = 1 - prop_treated
+    
+    # Add slider for fraction of patients to simulate
+    percent_of_patients_to_simulate = st.sidebar.slider("Percentage of worldwide patients to simulate", 
+                                                        0.01, 0.1, 0.02, 
+                                                        format="%.2f%%")
+    fraction_of_patients_to_simulate = percent_of_patients_to_simulate / 100
+
+    ch_groups = {
+        'Episodic Treated': int(total_ch_sufferers * prop_episodic * prop_treated),
+        'Episodic Untreated': int(total_ch_sufferers * prop_episodic * prop_untreated),
+        'Chronic Treated': int(total_ch_sufferers * prop_chronic * prop_treated),
+        'Chronic Untreated': int(total_ch_sufferers * prop_chronic * prop_untreated)
+    }
+
+    n_episodic_treated = int(ch_groups['Episodic Treated'] * fraction_of_patients_to_simulate)
+    n_episodic_untreated = int(ch_groups['Episodic Untreated'] * fraction_of_patients_to_simulate)
+    n_chronic_treated = int(ch_groups['Chronic Treated'] * fraction_of_patients_to_simulate)
+    n_chronic_untreated = int(ch_groups['Chronic Untreated'] * fraction_of_patients_to_simulate)
+
+    # Display calculated total CH sufferers and simulated patients
+    total_simulated = sum([n_episodic_treated, n_episodic_untreated, n_chronic_treated, n_chronic_untreated])
+    st.sidebar.write(f"Total patients to simulate: {total_simulated:,}, of which:")
+    st.sidebar.write(f"- Episodic Treated: {n_episodic_treated:,} ({round(n_episodic_treated/total_simulated*100)}%)")
+    st.sidebar.write(f"- Episodic Untreated: {n_episodic_untreated:,} ({round(n_episodic_untreated/total_simulated*100)}%)")
+    st.sidebar.write(f"- Chronic Treated: {n_chronic_treated:,} ({round(n_chronic_treated/total_simulated*100)}%)")
+    st.sidebar.write(f"- Chronic Untreated: {n_chronic_untreated:,} ({round(n_chronic_untreated/total_simulated*100)}%)")
 
     groups_simulated = [
-    ("Episodic Treated", lambda p: not p.is_chronic and p.is_treated, n_episodic_treated),
-    ("Episodic Untreated", lambda p: not p.is_chronic and not p.is_treated, n_episodic_untreated),
-    ("Chronic Treated", lambda p: p.is_chronic and p.is_treated, n_chronic_treated),
-    ("Chronic Untreated", lambda p: p.is_chronic and not p.is_treated, n_chronic_untreated)
+        ("Episodic Treated", lambda p: not p.is_chronic and p.is_treated, n_episodic_treated),
+        ("Episodic Untreated", lambda p: not p.is_chronic and not p.is_treated, n_episodic_untreated),
+        ("Chronic Treated", lambda p: p.is_chronic and p.is_treated, n_chronic_treated),
+        ("Chronic Untreated", lambda p: p.is_chronic and not p.is_treated, n_chronic_untreated)
     ]
     
     # Button to run simulation
@@ -558,27 +509,70 @@ def main():
         # Display results
         st.subheader("Simulation Results")
         
-        # Plot total minutes
-        fig1 = plot_data(intensities, [(name, total, _, _) for name, _, total, _ in group_data], 
-                  'Total Minutes', 'Distribution of Time Spent at Different Max Pain Intensities')
-        st.pyplot(fig1)
+        # Convert data to a format suitable for Plotly
+        df_list = []
+        global_minutes = {}
+        for name, avg, total, n in group_data:
+            df_list.append(pd.DataFrame({
+                'intensity': intensities,
+                'average_minutes': avg,
+                'total_minutes': total,
+                'group': name
+            }))
+            # Calculate global minutes for each group
+            global_total = ch_groups[name]
+            global_minutes[name] = [a * global_total for a in avg]
+        df = pd.concat(df_list)
 
-        # Plot average minutes
-        fig2 = plot_data(intensities, [(name, avg, _, _) for name, avg, _, _ in group_data], 
-                  'Average Minutes', 'Distribution of Time Spent at Different Max Pain Intensities')
-        st.pyplot(fig2)
+        # Create and display average minutes plot
+        fig_avg = px.line(df, x='intensity', y='average_minutes', color='group',
+                  title='Average Minutes per Year Spent at Different Max Pain Intensities')
 
-        # Display some statistics
-        st.subheader("Statistics")
-        for group_name, _, _, n_patients in group_data:
-            st.write(f"{group_name}: {n_patients} patients")
+        fig_avg.update_layout(
+            xaxis_title='Max Pain Intensity',
+            yaxis_title='Average Minutes',
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1),  # Set x-axis ticks to steps of 1
+            yaxis=dict(tickformat=','),  # Add commas to y-axis labels
+            legend_title_text=''  # Remove the "group" word from legend title
+        )
+
+        st.plotly_chart(fig_avg)
+
+        # Create and display global estimated minutes plot
+        # Calculate person-years for each group and intensity
+        for name in global_minutes:
+            global_minutes[name] = [mins / (60 * 24 * 365) for mins in global_minutes[name]]
+        
+        # Create DataFrame for global person-years
+        df_global = pd.DataFrame({
+            'intensity': intensities,
+            **{name: global_minutes[name] for name in ch_groups.keys()}
+        })
+        df_global_melted = df_global.melt(id_vars=['intensity'], var_name='group', value_name='global_person_years')
+        
+        # Create and display global estimated person-years plot
+        fig_global = px.line(df_global_melted, x='intensity', y='global_person_years', color='group',
+                             title='Estimated Global Annual Person-Years Spent in CH by Intensity')
+        
+        fig_global.update_layout(
+            xaxis_title='Max Pain Intensity',
+            yaxis_title='Estimated Global Person-Years per Year',
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1),  # Set x-axis ticks to steps of 1
+            yaxis=dict(tickformat=',.0f'),  # Add commas to y-axis labels and remove decimal places
+            legend_title_text=''  # Remove the "group" word from legend title
+        )
+        
+        st.plotly_chart(fig_global)
+        
+        # Calculate and display total person-years
+        total_person_years = {group: sum(years) for group, years in global_minutes.items()}
+        st.subheader("Estimated total person-years spent in CH annually:")
+        for group, years in total_person_years.items():
+            st.write(f"{group}: {years:,.0f} person-years")
+        
+        # Display total person-years across all groups
+        grand_total_person_years = sum(total_person_years.values())
+        st.write(f"Total across all groups: {grand_total_person_years:,.0f} person-years")
 
 if __name__ == "__main__":
     main()
-
-
-# In[ ]:
-
-
-
-
