@@ -846,36 +846,6 @@ def main():
         ("Chronic Untreated", lambda p: p.is_chronic and not p.is_treated, n_chronic_untreated)
     ]
 
-    # Sidebar title for scale transformation
-    st.sidebar.header("Intensity Scale Transformation")
-
-    method_map = {
-    'Linear': 'linear',
-    'Piecewise Linear': 'piecewise_linear',
-    'Power': 'power',
-    'Power (scaled)': 'power_scaled',
-    'Fitted Exponential': 'custom_exp',
-    'Logarithmic': 'log'
-    }
-
-    # Dropdown for selecting the transformation method
-    transformation_display = st.sidebar.selectbox(
-        "Select transformation method:",
-        list(method_map.keys())
-    )
-    
-    # Map the display name to the actual method name
-    transformation_method = method_map[transformation_display]
-    
-    # Slider for selecting max_value
-    max_value = st.sidebar.number_input("Select maximum value of the scale:", min_value=10, max_value=500, value=100, step=10)
-    
-    # Conditional input for power if 'power' method is selected
-    if transformation_method in ['power', 'power_scaled']:
-        power = st.sidebar.slider("Select power:", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
-    else:
-        power = 2  # default value, won't be used for other methods
-    
     # Button to run simulation
     if st.sidebar.button("Run Simulation"):
         # Run your simulation
@@ -889,7 +859,36 @@ def main():
             'group_data': group_data,
             'ch_groups': ch_groups
         }
-
+    
+    # Sidebar title for scale transformation
+    with st.sidebar.expander("Intensity Scale Transformation"):
+        method_map = {
+            'Linear': 'linear',
+            'Piecewise Linear': 'piecewise_linear',
+            'Power': 'power',
+            'Power (scaled)': 'power_scaled',
+            'Fitted Exponential': 'custom_exp',
+            'Logarithmic': 'log'
+        }
+    
+        # Dropdown for selecting the transformation method
+        transformation_display = st.selectbox(
+            "Select transformation method:",
+            list(method_map.keys())
+        )
+        
+        # Map the display name to the actual method name
+        transformation_method = method_map[transformation_display]
+        
+        # Slider for selecting max_value
+        max_value = st.number_input("Select maximum value of the scale:", min_value=10, max_value=500, value=100, step=10)
+        
+        # Conditional input for power if 'power' method is selected
+        if transformation_method in ['power', 'power_scaled']:
+            power = st.slider("Select power:", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
+        else:
+            power = 2  # default value, won't be used for other methods
+    
     # If simulation results exist, process and display them
     if 'simulation_results' in st.session_state:
         intensities = st.session_state.simulation_results['intensities']
@@ -922,8 +921,8 @@ def main():
                               intensities,
                               colors, 
                               markers,
-                              'Average Person-Minutes per Year Spent at Different Pain Intensities (±1σ)',
-                              'Average Person-Minutes per Year')
+                              'Average Minutes per Year Spent at Different Pain Intensities (±1σ)',
+                              'Average Minutes per Year')
         st.plotly_chart(fig_avg)
     
         # Create and display global estimated minutes plot
