@@ -789,7 +789,7 @@ def display_summary_table(df):
     
 # ## Streamlit app
 def main():
-    st.title("Cluster Headache Simulation")
+    st.title("Global Burden of Cluster Headache Pain")
 
     # Sidebar for user inputs
     st.sidebar.header("Parameters")
