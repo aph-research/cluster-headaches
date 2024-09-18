@@ -427,15 +427,74 @@ def calculate_group_data(population, groups_simulated):
     
     return intensities, group_data
 
-def print_aggregate_stats(group_name, attacks, intensities):
-    attack_stats = np.percentile(attacks, [25, 50, 75])
-    intensity_stats = np.percentile(intensities, [25, 50, 75])
-    print(f"{group_name}: N={len(attacks)}")
-    print(f"Attacks - Mean: {np.mean(attacks):.0f}, Median: {attack_stats[1]:.0f}, IQR: [{attack_stats[0]:.0f}, {attack_stats[2]:.0f}]")
-    print(f"Intensity - Mean: {np.mean(intensities):.1f}, Median: {intensity_stats[1]:.1f}, IQR: [{intensity_stats[0]:.1f}, {intensity_stats[2]:.1f}]")
-    print()
+def transform_intensity(intensities, method='linear', power=2, max_value=100):
+    """
+    Transform the intensity scale based on the specified method.
+    
+    :param intensities: Array of original intensity values (0-10 scale)
+    :param method: The transformation method ('linear', 'power', 'power_scaled', 'custom_exp', 'piecewise_linear', or 'log')
+    :param power: The power to use for the power law transformation
+    :param max_value: The maximum value of the transformed scale (required for all methods)
+    :return: Array of transformed intensity values
+    """
+    if max_value <= 0:
+        raise ValueError("max_value must be positive")
 
-def create_plot(fig, data, intensities, colors, markers, is_global=False):
+    if method == 'linear':
+        return intensities * (max_value / 10)
+    
+    elif method == 'power':
+        return (intensities ** power) * (max_value / (10 ** power))
+
+    elif method == 'power_scaled':
+        return (intensities / 10)**power * max_value
+    
+    elif method == 'custom_exp':
+        exp_func = lambda x, A, B, C: A * np.exp(B * x) + C
+        x = np.array([0, 7.42, 10])
+        y = np.array([0, max_value/2, max_value])
+        
+        # Adjust initial parameters based on max_value
+        p0 = np.array([max_value/10, 0.5, 0])
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            warnings.simplefilter("ignore", category=OptimizeWarning)
+            try:
+                A, B, C = curve_fit(exp_func, x, y, p0=p0, maxfev=10000)[0]
+            except RuntimeError:
+                print(f"Curve fitting failed for max_value={max_value}. Using fallback linear transformation.")
+                return intensities * (max_value / 10)
+        
+        return exp_func(intensities, A, B, C)
+    
+    elif method == 'piecewise_linear':
+        breakpoint = 8
+        lower_slope = (max_value / 2) / breakpoint
+        upper_slope = (max_value / 2) / (10 - breakpoint)
+        return np.where(intensities <= breakpoint,
+                        lower_slope * intensities,
+                        (max_value / 2) + upper_slope * (intensities - breakpoint))
+    
+    elif method == 'log':
+        # I(x) = 10^(x/25) - 1, scaled to max_value
+        return (10**(intensities/2.5) - 1) * (max_value / (10**(10/2.5) - 1))
+    
+    else:
+        raise ValueError("Invalid method. Choose 'linear', 'power', 'power_scaled', 'custom_exp', 'piecewise_linear', or 'log'.")
+
+def calculate_adjusted_person_years(global_person_years, transformation_method, power, max_value):
+    adjusted_person_years = {}
+    intensities = np.arange(0, 10.1, 0.1)
+    transformed_intensities = transform_intensity(intensities, method=transformation_method, power=power, max_value=max_value)
+    
+    for group, years in global_person_years.items():
+        adjusted_years = [y * t for y, t in zip(years, transformed_intensities)]
+        adjusted_person_years[group] = adjusted_years
+    
+    return adjusted_person_years
+    
+def create_plot(fig, data, intensities, colors, markers, title, y_title):
     for i, (name, values, std) in enumerate(data):
         color = colors[i % len(colors)]
         rgb_color = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
@@ -478,8 +537,6 @@ def create_plot(fig, data, intensities, colors, markers, is_global=False):
             hoverinfo='x+y+name'
         ))
 
-    title = 'Estimated Global Annual Person-Years Spent in Cluster Headaches by Intensity (±1σ)' if is_global else 'Average Person-Minutes per Year Spent at Different Pain Intensities (±1σ)'
-    y_title = 'Estimated Global Person-Years per Year' if is_global else 'Average Person-Minutes per Year'
     y_format = ',.0f'
 
     fig.update_layout(
@@ -625,6 +682,36 @@ def main():
         ("Chronic Treated", lambda p: p.is_chronic and p.is_treated, n_chronic_treated),
         ("Chronic Untreated", lambda p: p.is_chronic and not p.is_treated, n_chronic_untreated)
     ]
+
+    # Sidebar title for scale transformation
+    st.sidebar.header("Intensity Scale Transformation")
+
+    method_map = {
+    'Linear': 'linear',
+    'Piecewise Linear': 'piecewise_linear',
+    'Power': 'power',
+    'Power (scaled)': 'power_scaled',
+    'Fitted Exponential': 'custom_exp',
+    'Logarithmic': 'log_scale'
+    }
+
+    # Dropdown for selecting the transformation method
+    transformation_display = st.sidebar.selectbox(
+        "Select transformation method:",
+        list(method_map.keys())
+    )
+    
+    # Map the display name to the actual method name
+    transformation_method = method_map[transformation_display]
+    
+    # Slider for selecting max_value
+    max_value = st.sidebar.number_input("Select maximum value of the scale:", min_value=10, max_value=500, value=100, step=10)
+    
+    # Conditional input for power if 'power' method is selected
+    if transformation_method in ['power', 'power_scaled']:
+        power = st.sidebar.slider("Select power:", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
+    else:
+        power = 2  # default value, won't be used for other methods
     
     # Button to run simulation
     if st.sidebar.button("Run Simulation"):
@@ -651,7 +738,15 @@ def main():
         # Create and display average minutes plot with confidence interval
         fig_avg = go.Figure()
         avg_data = [(name, avg, std) for name, avg, std, _, _ in group_data]
-        fig_avg = create_plot(fig_avg, avg_data, intensities, px.colors.qualitative.Plotly, ['circle', 'square', 'diamond', 'cross'])
+        colors = px.colors.qualitative.Plotly
+        markers = ['circle', 'square', 'diamond', 'cross']
+        fig_avg = create_plot(fig_avg, 
+                              avg_data, 
+                              intensities,
+                              colors, 
+                              markers,
+                              'Average Person-Minutes per Year Spent at Different Pain Intensities (±1σ)',
+                              'Average Person-Minutes per Year')
         st.plotly_chart(fig_avg)
     
         # Create and display global estimated minutes plot
@@ -665,7 +760,13 @@ def main():
         
         fig_global = go.Figure()
         global_data = [(name, global_person_years[name], global_std_person_years[name]) for name in ch_groups.keys()]
-        fig_global = create_plot(fig_global, global_data, intensities, px.colors.qualitative.Plotly, ['circle', 'square', 'diamond', 'cross'], is_global=True)
+        fig_global = create_plot(fig_global,
+                                 global_data,
+                                 intensities,
+                                 colors,
+                                 markers,
+                                 'Global Annual Person-Years Spent in Cluster Headaches by Intensity (±1σ)',
+                                 'Global Person-Years per Year')
         st.plotly_chart(fig_global)
         
         # Calculate individual intensity person-years, high-intensity person-years, and their standard deviations
@@ -696,11 +797,20 @@ def main():
         high_intensity_error = list(high_intensity_std.values())
         
         # Create and display total person-years plot
-        fig_total = create_bar_plot(groups, total_values, total_error, 'Total Estimated Person-Years Spent in Cluster Headaches Annually by Group', 'Total Person-Years')
+        fig_total = create_bar_plot(groups,
+                                    total_values,
+                                    total_error,
+                                    'Total Estimated Person-Years Spent in Cluster Headaches Annually by Group',
+                                    'Total Person-Years')
         st.plotly_chart(fig_total)
         
         # Create and display high-intensity person-years plot
-        fig_high_intensity = create_bar_plot(groups, high_intensity_values, high_intensity_error, 'Estimated Person-Years Spent in Cluster Headaches Annually by Group (Intensity ≥9/10)', 'Person-Years (Intensity ≥9/10)')
+        fig_high_intensity = create_bar_plot(groups,
+                                             high_intensity_values,
+                                             high_intensity_error,
+                                             'Estimated Person-Years Spent in Cluster Headaches Annually by Group (Intensity ≥9/10)',
+                                             'Person-Years (Intensity ≥9/10)')
+       
         st.plotly_chart(fig_high_intensity)
 
         # Calculate total person-years for all groups
@@ -724,6 +834,39 @@ def main():
         # Print the values
         st.write(f"Total Person-Years: {total_all_groups:,.0f} ± {total_all_groups_std:,.0f}")
         st.write(f"Person-Years at ≥9/10 Intensity: {high_intensity_all_groups:,.0f} ± {high_intensity_all_groups_std:,.0f}")
+
+        # Calculate adjusted person-years
+        adjusted_person_years = calculate_adjusted_person_years(global_person_years, transformation_method, power, max_value)
+        
+        # Prepare the data in the format expected by create_plot
+        adjusted_data = []
+        for name in ch_groups.keys():
+            values = adjusted_person_years[name]
+            # Since we don't have standard deviation for adjusted values, we'll use zeros
+            std = [0] * len(values)
+            adjusted_data.append((name, values, std))
+        
+        # Create the adjusted plot
+        fig_adjusted = go.Figure()
+        fig_adjusted = create_plot(fig_adjusted,
+                                   adjusted_data,
+                                   intensities,
+                                   colors,
+                                   markers,
+                                   title=f"Intensity-Adjusted Person-Years by Cluster Headache Group ({transformation_display} Transformation)",
+                                   y_title="Intensity-Adjusted Person-Years")
+        
+        # Update y-axis to reflect adjusted values
+        max_adjusted_value = max(max(years) for years in adjusted_person_years.values())
+        fig_adjusted.update_layout(yaxis=dict(range=[0, max_adjusted_value * 1.1]))
+        
+        st.plotly_chart(fig_adjusted)
+        
+        # Display total adjusted person-years for each group
+        st.subheader("Total Intensity-Adjusted Person-Years by Group")
+        for group, years in adjusted_person_years.items():
+            total_adjusted = sum(years)
+            st.write(f"{group}: {total_adjusted:,.0f}")
 
 if __name__ == "__main__":
     main()
