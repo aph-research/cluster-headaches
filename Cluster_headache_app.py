@@ -1054,7 +1054,7 @@ def main():
         display_summary_table(df)
 
     else:
-        st.info('Please select your parameters and then press "Run Simulation".')
+        st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
         
 if __name__ == "__main__":
     main()
