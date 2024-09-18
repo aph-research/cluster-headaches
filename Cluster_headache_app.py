@@ -795,7 +795,7 @@ def main():
     st.sidebar.header("Parameters")
 
     # Add input for annual prevalence
-    annual_prevalence_per_100k = st.sidebar.number_input("Annual prevalence of CH sufferers (per 100,000)", 
+    annual_prevalence_per_100k = st.sidebar.number_input("Annual prevalence (per 100,000)", 
                                                          min_value=1, max_value=1000, value=53, step=1)
     annual_prevalence = annual_prevalence_per_100k / 100000
 
@@ -804,17 +804,17 @@ def main():
     adult_fraction = 0.72
     total_ch_sufferers = world_population * adult_fraction * annual_prevalence
 
-    st.sidebar.write(f"Total annual CH sufferers worldwide: {int(total_ch_sufferers):,}")
+    st.sidebar.write(f"Total individuals with cluster headaches annually worldwide: {int(total_ch_sufferers):,}")
     
     # Add sliders for key parameters
-    prop_chronic = st.sidebar.slider("Percentage of chronic patients", 0, 100, 20, format="%d%%") / 100
-    prop_treated = st.sidebar.slider("Percentage of treated patients", 0, 100, 48, format="%d%%") / 100
+    prop_chronic = st.sidebar.slider("Percentage of chronic cases", 0, 100, 20, format="%d%%") / 100
+    prop_treated = st.sidebar.slider("Percentage of treated cases", 0, 100, 48, format="%d%%") / 100
 
     prop_episodic = 1 - prop_chronic
     prop_untreated = 1 - prop_treated
     
     # Add slider for fraction of patients to simulate
-    percent_of_patients_to_simulate = st.sidebar.slider("Percentage of worldwide patients to simulate", 
+    percent_of_patients_to_simulate = st.sidebar.slider("Percentage of worldwide individuals to simulate", 
                                                         0.01, 0.1, 0.02, 
                                                         format="%.2f%%")
     fraction_of_patients_to_simulate = percent_of_patients_to_simulate / 100
@@ -833,7 +833,7 @@ def main():
 
     # Display calculated total CH sufferers and simulated patients
     total_simulated = sum([n_episodic_treated, n_episodic_untreated, n_chronic_treated, n_chronic_untreated])
-    st.sidebar.write(f"Total patients to simulate: {total_simulated:,}, of which:")
+    st.sidebar.write(f"Total individuals to simulate: {total_simulated:,}, of which:")
     st.sidebar.write(f"- Episodic Treated: {n_episodic_treated:,} ({round(n_episodic_treated/total_simulated*100)}%)")
     st.sidebar.write(f"- Episodic Untreated: {n_episodic_untreated:,} ({round(n_episodic_untreated/total_simulated*100)}%)")
     st.sidebar.write(f"- Chronic Treated: {n_chronic_treated:,} ({round(n_chronic_treated/total_simulated*100)}%)")
