@@ -855,7 +855,7 @@ def main():
     'Power': 'power',
     'Power (scaled)': 'power_scaled',
     'Fitted Exponential': 'custom_exp',
-    'Logarithmic': 'log_scale'
+    'Logarithmic': 'log'
     }
 
     # Dropdown for selecting the transformation method
@@ -882,6 +882,20 @@ def main():
         population = generate_population(n_episodic_treated, n_episodic_untreated, n_chronic_treated, n_chronic_untreated)
         intensities, group_data = calculate_group_data(population, groups_simulated)
         
+        # Store simulation results in session state
+        st.session_state.simulation_results = {
+            'population': population,
+            'intensities': intensities,
+            'group_data': group_data,
+            'ch_groups': ch_groups
+        }
+
+    # If simulation results exist, process and display them
+    if 'simulation_results' in st.session_state:
+        intensities = st.session_state.simulation_results['intensities']
+        group_data = st.session_state.simulation_results['group_data']
+        ch_groups = st.session_state.simulation_results['ch_groups']
+
         # Convert data to a format suitable for Plotly
         df_list = []
         global_minutes = {}
@@ -1039,6 +1053,9 @@ def main():
         table_data = create_summary_table(ch_groups, avg_data, total_person_years, high_intensity_person_years, adjusted_global_pain_units, adjusted_avg_pain_units)
         df = create_dataframe(table_data)
         display_summary_table(df)
+
+    else:
+        st.info('Please select your parameters and then press "Run Simulation".')
         
 if __name__ == "__main__":
     main()
