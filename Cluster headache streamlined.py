@@ -483,16 +483,12 @@ def transform_intensity(intensities, method='linear', power=2, max_value=100):
     else:
         raise ValueError("Invalid method. Choose 'linear', 'power', 'power_scaled', 'custom_exp', 'piecewise_linear', or 'log'.")
 
-def calculate_adjusted_person_years(global_person_years, transformation_method, power, max_value):
-    adjusted_person_years = {}
+def calculate_adjusted_pain_units(time_amounts, transformation_method, power, max_value):
     intensities = np.arange(0, 10.1, 0.1)
     transformed_intensities = transform_intensity(intensities, method=transformation_method, power=power, max_value=max_value)
+    adjusted_pain_units = [y * t for y, t in zip(time_amounts, transformed_intensities)]
     
-    for group, years in global_person_years.items():
-        adjusted_years = [y * t for y, t in zip(years, transformed_intensities)]
-        adjusted_person_years[group] = adjusted_years
-    
-    return adjusted_person_years
+    return adjusted_pain_units
     
 def create_plot(fig, data, intensities, colors, markers, title, y_title):
     for i, (name, values, std) in enumerate(data):
@@ -755,8 +751,8 @@ def main():
         global_std_person_years = {}
         for name, avg, std, _, _ in group_data:
             global_total = ch_groups[name]
-            global_person_years[name] = [(a * global_total) / (60 * 24 * 365) for a in avg]
-            global_std_person_years[name] = [(s * global_total) / (60 * 24 * 365) for s in std]
+            global_person_years[name] = np.array([(a * global_total) / (60 * 24 * 365) for a in avg])
+            global_std_person_years[name] = np.array([(s * global_total) / (60 * 24 * 365) for s in std])
         
         fig_global = go.Figure()
         global_data = [(name, global_person_years[name], global_std_person_years[name]) for name in ch_groups.keys()]
@@ -836,12 +832,14 @@ def main():
         st.write(f"Person-Years at ≥9/10 Intensity: {high_intensity_all_groups:,.0f} ± {high_intensity_all_groups_std:,.0f}")
 
         # Calculate adjusted person-years
-        adjusted_person_years = calculate_adjusted_person_years(global_person_years, transformation_method, power, max_value)
+        adjusted_pain_units = {}
+        for group, years in global_person_years.items():
+            adjusted_pain_units[group] = calculate_adjusted_pain_units(years, transformation_method, power, max_value)
         
         # Prepare the data in the format expected by create_plot
         adjusted_data = []
         for name in ch_groups.keys():
-            values = adjusted_person_years[name]
+            values = adjusted_pain_units[name]
             # Since we don't have standard deviation for adjusted values, we'll use zeros
             std = [0] * len(values)
             adjusted_data.append((name, values, std))
@@ -853,20 +851,20 @@ def main():
                                    intensities,
                                    colors,
                                    markers,
-                                   title=f"Intensity-Adjusted Person-Years by Cluster Headache Group ({transformation_display} Transformation)",
-                                   y_title="Intensity-Adjusted Person-Years")
+                                   title=f"Intensity-Adjusted Pain Units by Cluster Headache Group ({transformation_display} Transformation)",
+                                   y_title="Intensity-Adjusted Pain Units")
         
         # Update y-axis to reflect adjusted values
-        max_adjusted_value = max(max(years) for years in adjusted_person_years.values())
+        max_adjusted_value = max(max(units) for units in adjusted_pain_units.values())
         fig_adjusted.update_layout(yaxis=dict(range=[0, max_adjusted_value * 1.1]))
         
         st.plotly_chart(fig_adjusted)
         
         # Display total adjusted person-years for each group
-        st.subheader("Total Intensity-Adjusted Person-Years by Group")
-        for group, years in adjusted_person_years.items():
-            total_adjusted = sum(years)
-            st.write(f"{group}: {total_adjusted:,.0f}")
+        st.subheader("Total Annual Intensity-Adjusted Pain Units by Group")
+        for group, units in adjusted_pain_units.items():
+            total_adjusted = sum(units)
+            st.write(f"- {group}: {total_adjusted:,.0f}")
 
 if __name__ == "__main__":
     main()
