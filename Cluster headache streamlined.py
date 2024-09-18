@@ -5,7 +5,7 @@
 
 import numpy as np
 from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon
-from scipy.optimize import minimize, curve_fit
+from scipy.optimize import minimize, curve_fit, OptimizeWarning
 import warnings
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
@@ -619,6 +619,173 @@ def create_comparison_plot(bar_values, bar_errors):
     )
 
     return fig_comparison
+
+def format_with_adjusted(value, adjusted):
+    return f"{value:,.0f} ({adjusted:,.0f})"
+
+def create_summary_table(ch_groups, avg_data, total_person_years, high_intensity_person_years, adjusted_pain_units, transformation_method, power, max_value):
+    table_data = []
+    total_row = {
+        'Group': 'Total',
+        'Average Patient': {key: 0 for key in ['Minutes', 'High-Intensity Minutes', 'Adjusted Units', 'High-Intensity Adjusted Units']},
+        'Global Estimate': {key: 0 for key in ['Person-Years', 'High-Intensity Person-Years', 'Adjusted Units', 'High-Intensity Adjusted Units']}
+    }
+
+def create_summary_table(ch_groups, avg_data, total_person_years, high_intensity_person_years, adjusted_pain_units, adjusted_avg_pain_units):
+    table_data = []
+    total_row = {
+        'Group': 'Total',
+        'Average Patient': {key: 0 for key in ['Minutes', 'High-Intensity Minutes', 'Adjusted Units', 'High-Intensity Adjusted Units']},
+        'Global Estimate': {key: 0 for key in ['Person-Years', 'High-Intensity Person-Years', 'Adjusted Units', 'High-Intensity Adjusted Units']}
+    }
+
+    avg_data_dict = {name: avg for name, avg, _ in avg_data}
+
+    for group in ch_groups.keys():
+        avg_minutes = sum(avg_data_dict[group])
+        avg_high_minutes = sum(avg_data_dict[group][90:])
+        global_years = total_person_years[group]
+        global_high_years = high_intensity_person_years[group]
+        
+        avg_adjusted_units = sum(adjusted_avg_pain_units[group])
+        avg_high_adjusted_units = sum(adjusted_avg_pain_units[group][90:])
+        
+        global_adjusted_units = sum(adjusted_pain_units[group])
+        global_high_adjusted_units = sum(adjusted_pain_units[group][90:])
+        
+        row = {
+            'Group': group,
+            'Average Patient': {
+                'Minutes': avg_minutes,
+                'High-Intensity Minutes': avg_high_minutes,
+                'Adjusted Units': avg_adjusted_units,
+                'High-Intensity Adjusted Units': avg_high_adjusted_units
+            },
+            'Global Estimate': {
+                'Person-Years': global_years,
+                'High-Intensity Person-Years': global_high_years,
+                'Adjusted Units': global_adjusted_units,
+                'High-Intensity Adjusted Units': global_high_adjusted_units
+            }
+        }
+        table_data.append(row)
+        
+        # Update total row
+        for category in ['Average Patient', 'Global Estimate']:
+            for key in total_row[category].keys():
+                total_row[category][key] += row[category][key]
+    
+    table_data.append(total_row)
+    return table_data
+
+def create_dataframe(table_data):
+    df_data = [
+        {
+            'Group': row['Group'],
+            'Minutes': format_with_adjusted(row['Average Patient']['Minutes'], row['Average Patient']['Adjusted Units']),
+            'High-Intensity Minutes': format_with_adjusted(row['Average Patient']['High-Intensity Minutes'], row['Average Patient']['High-Intensity Adjusted Units']),
+            'Person-Years': format_with_adjusted(row['Global Estimate']['Person-Years'], row['Global Estimate']['Adjusted Units']),
+            'High-Intensity Person-Years': format_with_adjusted(row['Global Estimate']['High-Intensity Person-Years'], row['Global Estimate']['High-Intensity Adjusted Units'])
+        }
+        for row in table_data
+    ]
+    df = pd.DataFrame(df_data)
+    
+    df.columns = pd.MultiIndex.from_tuples([
+        ('', 'Group'),
+        ('Average Patient', 'Total Minutes in Pain'),
+        ('Average Patient', 'Minutes in ≥9/10 Pain'),
+        ('Global Estimate', 'Total Person-Years in Pain'),
+        ('Global Estimate', 'Person-Years in ≥9/10 Pain')
+    ])
+    
+    return df
+
+def display_summary_table(df):
+    css = """
+    <style>
+        .dataframe {
+            width: 100%;
+            text-align: right;
+            border-collapse: collapse;
+            font-size: 0.9em;
+            color: #333;
+            background-color: #f8f8f8;
+            border-left: none;
+            border-right: none;
+        }
+        .dataframe th, .dataframe td {
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            border-left: none;
+            border-right: none;
+            padding: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-width: 150px;
+            text-align: center;  /* Center-align all cells */
+        }
+        .dataframe thead tr:nth-child(1) th {
+            background-color: #e0e0e0;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+        }
+        .dataframe thead tr:nth-child(2) th {
+            background-color: #e8e8e8;
+            text-align: center;
+            color: #333;
+        }
+        .dataframe tbody tr:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+        .dataframe tbody tr:nth-child(odd) {
+            background-color: #f8f8f8;
+        }
+        .dataframe tbody tr:hover {
+            background-color: #e8e8e8;
+        }
+        .dataframe td:first-child, .dataframe th:first-child {
+            text-align: left;
+        }
+        .table-note {
+            margin-top: 10px;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        .dataframe tr:last-child {
+            font-weight: bold;
+        }
+        @media (prefers-color-scheme: dark) {
+            .dataframe, .table-note {
+                color: #e0e0e0;
+                background-color: #2c2c2c;
+            }
+            .dataframe th, .dataframe td {
+                border-color: #4a4a4a;
+            }
+            .dataframe thead tr:nth-child(1) th,
+            .dataframe thead tr:nth-child(2) th {
+                background-color: #3c3c3c;
+                color: #e0e0e0;
+            }
+            .dataframe tbody tr:nth-child(even) {
+                background-color: #323232;
+            }
+            .dataframe tbody tr:nth-child(odd) {
+                background-color: #2c2c2c;
+            }
+            .dataframe tbody tr:hover {
+                background-color: #3a3a3a;
+            }
+        }
+    </style>
+    """
+    
+    table_html = df.to_html(index=False, escape=False, classes='dataframe')
+    
+    st.markdown(css, unsafe_allow_html=True)
+    st.write(table_html, unsafe_allow_html=True)
     
 # ## Streamlit app
 def main():
@@ -831,19 +998,23 @@ def main():
         st.write(f"Total Person-Years: {total_all_groups:,.0f} ± {total_all_groups_std:,.0f}")
         st.write(f"Person-Years at ≥9/10 Intensity: {high_intensity_all_groups:,.0f} ± {high_intensity_all_groups_std:,.0f}")
 
-        # Calculate adjusted person-years
-        adjusted_pain_units = {}
+        # Calculate adjusted pain units for global estimates
+        adjusted_global_pain_units = {}
         for group, years in global_person_years.items():
-            adjusted_pain_units[group] = calculate_adjusted_pain_units(years, transformation_method, power, max_value)
-        
-        # Prepare the data in the format expected by create_plot
+            adjusted_global_pain_units[group] = calculate_adjusted_pain_units(years, transformation_method, power, max_value)
+    
+        # Calculate adjusted pain units for average patient
+        adjusted_avg_pain_units = {}
+        for name, avg, _ in avg_data:
+            adjusted_avg_pain_units[name] = calculate_adjusted_pain_units(avg, transformation_method, power, max_value)
+    
+        # Prepare the data for the adjusted plot
         adjusted_data = []
         for name in ch_groups.keys():
-            values = adjusted_pain_units[name]
-            # Since we don't have standard deviation for adjusted values, we'll use zeros
+            values = adjusted_global_pain_units[name]
             std = [0] * len(values)
             adjusted_data.append((name, values, std))
-        
+    
         # Create the adjusted plot
         fig_adjusted = go.Figure()
         fig_adjusted = create_plot(fig_adjusted,
@@ -853,18 +1024,21 @@ def main():
                                    markers,
                                    title=f"Intensity-Adjusted Pain Units by Cluster Headache Group ({transformation_display} Transformation)",
                                    y_title="Intensity-Adjusted Pain Units")
-        
+    
         # Update y-axis to reflect adjusted values
-        max_adjusted_value = max(max(units) for units in adjusted_pain_units.values())
+        max_adjusted_value = max(max(units) for units in adjusted_global_pain_units.values())
         fig_adjusted.update_layout(yaxis=dict(range=[0, max_adjusted_value * 1.1]))
-        
+    
         st.plotly_chart(fig_adjusted)
-        
+    
         # Display total adjusted person-years for each group
-        st.subheader("Total Annual Intensity-Adjusted Pain Units by Group")
-        for group, units in adjusted_pain_units.items():
-            total_adjusted = sum(units)
-            st.write(f"- {group}: {total_adjusted:,.0f}")
-
+        st.subheader("Intensity-Adjusted Pain Units Experienced Annually")
+        st.write("(Values in brackets represent adjusted pain units.)")
+    
+        # Create and display the summary table
+        table_data = create_summary_table(ch_groups, avg_data, total_person_years, high_intensity_person_years, adjusted_global_pain_units, adjusted_avg_pain_units)
+        df = create_dataframe(table_data)
+        display_summary_table(df)
+        
 if __name__ == "__main__":
     main()
