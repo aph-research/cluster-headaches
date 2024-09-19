@@ -4,6 +4,7 @@
 # # Cluster headache simulations: Streamlined full model
 
 import numpy as np
+import random
 from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon
 from scipy.optimize import minimize, curve_fit, OptimizeWarning
 import warnings
@@ -15,9 +16,13 @@ import pandas as pd
 from matplotlib.ticker import FuncFormatter
 import streamlit as st
 
+def set_random_seeds(seed=42):
+    np.random.seed(seed)
+    random.seed(seed)
+
 # ## Annual bout frequency for episodic patients
 
-data = {
+bout_frequency_datapoints = {
     # Discretized approximation for a distribution with mean 1.2, SD 1.1
     'Gaul': {'n': 209, 'dist': {1: 0.6, 2: 0.3, 3: 0.1}},  
     
@@ -46,11 +51,11 @@ data = {
 
 # Combine distributions
 combined_dist = {}
-total_n = sum(study['n'] for study in data.values())
+total_n = sum(datapoint['n'] for datapoint in bout_frequency_datapoints.values())
 
-for study in data.values():
-    weight = study['n'] / total_n
-    for bouts, prob in study['dist'].items():
+for datapoint in bout_frequency_datapoints.values():
+    weight = datapoint['n'] / total_n
+    for bouts, prob in datapoint['dist'].items():
         combined_dist[bouts] = combined_dist.get(bouts, 0) + prob * weight
 
 # Normalize the combined distribution
@@ -63,11 +68,11 @@ bouts_per_year = rv_discrete(values=(list(combined_dist.keys()), list(combined_d
 
 # ## Bout duration for episodic patients
 
-data = []
+bout_duration_datapoints = []
 sample_sizes = []
 
 # Gaul et al. (2012)
-data.append(8.5)
+bout_duration_datapoints.append(8.5)
 sample_sizes.append(209)
 
 # Li et al. (2022)
@@ -75,37 +80,36 @@ total_li = 327
 original_proportions = np.array([0.104, 0.235, 0.502, 0.131])
 sum_proportions = np.sum(original_proportions)
 new_proportions = original_proportions / sum_proportions
-data.extend([1, gmean([2, 4]), gmean([4, 8]), 8])
+bout_duration_datapoints.extend([1, gmean([2, 4]), gmean([4, 8]), 8])
 sample_sizes.extend([int(prop * total_li) for prop in new_proportions])
 
 # Friedman & Mikropoulos (1958)
-data.append(gmean([6, 8]))
+bout_duration_datapoints.append(gmean([6, 8]))
 sample_sizes.append(50)
 
 # Ekbom (1970)
-data.append(gmean([4, 12]))
+bout_duration_datapoints.append(gmean([4, 12]))
 sample_sizes.append(105)
 
 # Lance & Anthony (1971)
-data.append(gmean([2, 12]))
+bout_duration_datapoints.append(gmean([2, 12]))
 sample_sizes.append(60)
 
 # Sutherland & Eadie (1972)
 total_sutherland = 58
-data.extend([np.mean([0, 4]), gmean([5, 13]), gmean([14, 26]), gmean([27, 52])])
+bout_duration_datapoints.extend([np.mean([0, 4]), gmean([5, 13]), gmean([14, 26]), gmean([27, 52])])
 sample_sizes.extend([int(0.23 * total_sutherland), int(0.45 * total_sutherland), 
                      int(0.19 * total_sutherland), int(0.14 * total_sutherland)])
-
 # Rozen & Fishman (2012)
-data.append(10.3)
+bout_duration_datapoints.append(10.3)
 sample_sizes.append(101)
 
 # Manzoni et al. (1983)
-data.append(gmean([4, 8]))
+bout_duration_datapoints.append(gmean([4, 8]))
 sample_sizes.append(161)
 
 # Convert to numpy arrays
-data = np.array(data)
+bout_duration_datapoints = np.array(bout_duration_datapoints)
 sample_sizes = np.array(sample_sizes)
 
 # Use sample sizes as weights
@@ -114,9 +118,9 @@ weights = sample_sizes / np.sum(sample_sizes)
 # Fitting the lognormal distribution
 def neg_log_likelihood(params):
     mu, sigma = params
-    return -np.sum(weights * lognorm.logpdf(data, s=sigma, scale=np.exp(mu)))
+    return -np.sum(weights * lognorm.logpdf(bout_duration_datapoints, s=sigma, scale=np.exp(mu)))
 
-initial_params = [np.log(np.average(data, weights=weights)), 0.5]
+initial_params = [np.log(np.average(bout_duration_datapoints, weights=weights)), 0.5]
 result = minimize(neg_log_likelihood, initial_params, method='Nelder-Mead')
 optimal_mu, optimal_sigma = result.x
 
@@ -183,7 +187,6 @@ episodic_treated_mu, episodic_treated_sigma = fit_lognormal(episodic_treated_mea
 chronic_treated_mu, chronic_treated_sigma = fit_lognormal(chronic_treated_mean, chronic_treated_std)
 episodic_untreated_mu, episodic_untreated_sigma = fit_lognormal(episodic_untreated_mean, episodic_untreated_std)
 chronic_untreated_mu, chronic_untreated_sigma = fit_lognormal(chronic_untreated_mean, chronic_untreated_std)
-
 
 # ## Simulating active days for chronic patients
 
@@ -789,6 +792,9 @@ def display_summary_table(df):
     
 # ## Streamlit app
 def main():
+
+    set_random_seeds()
+    
     st.title("Global Burden of Cluster Headache Pain")
 
     # Sidebar for user inputs
