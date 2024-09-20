@@ -9,3 +9,5 @@ sim_stats
 .ipynb_checkpoints/Cluster headache app-checkpoint.py
 .ipynb_checkpoints/Cluster_headache_app-checkpoint.py
 /.ipynb_checkpoints
+/__pycache__
+profile_results.txt

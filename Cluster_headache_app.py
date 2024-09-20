@@ -3,6 +3,9 @@ import numpy as np
 from SimulationConfig import SimulationConfig
 from simulation import Simulation
 from visualizer import Visualizer
+import cProfile
+import pstats
+import io
 
 # Set random seeds for reproducibility
 def set_random_seeds(seed=42):
@@ -18,6 +21,7 @@ def create_sidebar_inputs():
                                                          min_value=1, max_value=1000, value=53, step=1)
 
     total_ch_sufferers = SimulationConfig.world_population * SimulationConfig.adult_fraction * (annual_prevalence_per_100k / 100000)
+    
     st.sidebar.write(f"Total individuals with cluster headaches annually worldwide: {int(total_ch_sufferers):,}")
     
     prop_chronic = st.sidebar.slider("Percentage of chronic cases", 0, 100, 20, format="%d%%") / 100
@@ -155,4 +159,13 @@ def main():
 
 # Run the app
 if __name__ == "__main__":
+    pr = cProfile.Profile()
+    pr.enable()
     main()
+    pr.disable()
+    s = io.StringIO()
+    sortby = 'cumulative'
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    with open("profile_results.txt", "w") as f:
+        f.write(s.getvalue())

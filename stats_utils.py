@@ -146,18 +146,26 @@ def initialize_attack_parameters():
 # Initialize the parameters
 attack_params = initialize_attack_parameters()
 
-def generate_attacks_per_day(is_chronic, is_treated, max_daily_ch=np.inf):
+def generate_attacks_per_day(is_chronic, is_treated, max_daily_ch=np.inf, size=1):
     if is_chronic:
-        mu, sigma = (attack_params.chronic_treated_mu, attack_params.chronic_treated_sigma) if is_treated else (attack_params.chronic_untreated_mu, attack_params.chronic_untreated_sigma)
+        if is_treated:
+            mu, sigma = attack_params.chronic_treated_mu, attack_params.chronic_treated_sigma
+        else:
+            mu, sigma = attack_params.chronic_untreated_mu, attack_params.chronic_untreated_sigma
     else:
-        mu, sigma = (attack_params.episodic_treated_mu, attack_params.episodic_treated_sigma) if is_treated else (attack_params.episodic_untreated_mu, attack_params.episodic_untreated_sigma)
+        if is_treated:
+            mu, sigma = attack_params.episodic_treated_mu, attack_params.episodic_treated_sigma
+        else:
+            mu, sigma = attack_params.episodic_untreated_mu, attack_params.episodic_untreated_sigma
     
-    while True:
-        attacks = lognorm.rvs(s=sigma, scale=np.exp(mu))
-        if attacks <= max_daily_ch:
-            break
+    attacks = lognorm.rvs(s=sigma, scale=np.exp(mu), size=size)
     
-    return max(1, round(attacks))
+    # Filter out values that exceed max_daily_ch and resample them
+    while np.any(attacks > max_daily_ch):
+        invalid_indices = attacks > max_daily_ch
+        attacks[invalid_indices] = lognorm.rvs(s=sigma, scale=np.exp(mu), size=np.sum(invalid_indices))
+    
+    return np.round(attacks).astype(int)
 
 def generate_chronic_active_days():
     while True:

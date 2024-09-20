@@ -62,27 +62,29 @@ class Patient:
     def generate_year_of_attacks(self):
         self.attacks = []
         total_attacks = 0
+
         if self.is_chronic:
-            for day in range(min(365, self.active_days)):
-                total_attacks += self.generate_day_attacks()
+            active_days = min(365, self.active_days)
+            attacks_per_day = generate_attacks_per_day(self.is_chronic, self.is_treated, size=active_days)
         else:
-            for duration in self.bout_durations:
-                for day in range(duration):
-                    total_attacks += self.generate_day_attacks()
+            active_days = sum(self.bout_durations)
+            attacks_per_day = generate_attacks_per_day(self.is_chronic, self.is_treated, size=active_days)
+
+        total_attacks = self.generate_day_attacks(attacks_per_day)
         return total_attacks
 
-    def generate_day_attacks(self):
+    def generate_day_attacks(self, attacks_per_day):
         daily_attacks = 0
-        attacks_today = generate_attacks_per_day(self.is_chronic, self.is_treated)
 
-        for _ in range(attacks_today):
-            if self.pool_index >= len(self.attack_pool):
-                # If we've used all pre-generated attacks, generate more
-                self.pre_generate_attack_pool()
-            
-            self.attacks.append(self.attack_pool[self.pool_index])
-            self.pool_index += 1
-            daily_attacks += 1
+        if self.pool_index + sum(attacks_per_day) > len(self.attack_pool):
+            # If we've used all pre-generated attacks, generate more
+            self.pre_generate_attack_pool()
+        
+        for attacks_today in attacks_per_day:
+            day_attacks = self.attack_pool[self.pool_index:self.pool_index + attacks_today]
+            self.attacks.extend(day_attacks)
+            self.pool_index += attacks_today
+            daily_attacks += attacks_today
 
         return daily_attacks
 
