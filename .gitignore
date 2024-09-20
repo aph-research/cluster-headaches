@@ -11,3 +11,4 @@ sim_stats
 /.ipynb_checkpoints
 /__pycache__
 profile_results.txt
+*.pyc
