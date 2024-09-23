@@ -1,5 +1,6 @@
 # simulation.py
 import numpy as np
+from collections import defaultdict
 from models import Patient, Attack
 from SimulationConfig import SimulationConfig
 from stats_utils import calculate_adjusted_pain_units, generate_attacks_per_day
@@ -12,6 +13,10 @@ class Simulation:
         self.intensities = np.arange(0, 10.1, 0.1)
         self.ch_groups = None
         self.global_person_years = {}
+        self.global_std_person_years = {}
+        self.global_total_attacks = {}
+        self.global_total_attack_durations = {}
+        self.global_average_intensity = {}
         self.group_data = []
         self.total_ch_sufferers = None
 
@@ -68,6 +73,9 @@ class Simulation:
         group_data = []
         global_person_years = {}
         global_std_person_years = {}
+        global_total_attacks = defaultdict(list)
+        global_total_attack_durations = defaultdict(list)
+        global_average_intensity = defaultdict(list)
 
         for group_name, condition in [
             ("Episodic Treated", lambda p: not p.is_chronic and p.is_treated),
@@ -85,6 +93,9 @@ class Simulation:
                     rounded_intensity = round(intensity, 1)
                     total_intensity_minutes[rounded_intensity] = total_intensity_minutes.get(rounded_intensity, 0) + minutes
                     intensity_minutes_list[rounded_intensity].append(minutes)
+                global_total_attacks[group_name].append(patient.calculate_total_attacks())
+                global_total_attack_durations[group_name].append(patient.calculate_total_duration())
+                global_average_intensity[group_name].append(patient.calculate_average_intensity())
 
             n_patients = len(group_patients)
             intensity_minutes_average = [total_intensity_minutes.get(round(i, 1), 0) / n_patients for i in self.intensities]
@@ -100,6 +111,9 @@ class Simulation:
         self.group_data = group_data
         self.global_person_years = global_person_years
         self.global_std_person_years = global_std_person_years
+        self.global_total_attacks = global_total_attacks
+        self.global_total_attack_durations = global_total_attack_durations
+        self.global_average_intensity = global_average_intensity
 
     def calculate_adjusted_pain_units(self):
         self.adjusted_pain_units = {}
@@ -133,8 +147,11 @@ class Simulation:
             'group_data': self.group_data,
             'global_person_years': self.global_person_years,
             'global_std_person_years': self.global_std_person_years,
+            'global_total_attacks': self.global_total_attacks,
+            'global_total_attack_durations': self.global_total_attack_durations,
+            'global_average_intensity': self.global_average_intensity,
             'ch_groups': self.ch_groups,
             'adjusted_pain_units': self.adjusted_pain_units,
             'adjusted_avg_pain_units': self.adjusted_avg_pain_units,
-            'calculate_adjusted_pain_units': calculate_adjusted_pain_units  # Include the function itself
+            'calculate_adjusted_pain_units': calculate_adjusted_pain_units
         }

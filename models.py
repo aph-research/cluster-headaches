@@ -94,3 +94,14 @@ class Patient:
             intensity = round(attack.max_intensity, 1)  # Round to nearest 0.1
             intensity_minutes[intensity] = intensity_minutes.get(intensity, 0) + attack.max_intensity_duration
         return intensity_minutes
+
+    def calculate_total_attacks(self):
+        return len(self.attacks)
+
+    def calculate_total_duration(self):
+        return sum(attack.total_duration for attack in self.attacks)
+
+    def calculate_average_intensity(self):
+        if not self.attacks:
+            return 0
+        return np.mean([attack.max_intensity for attack in self.attacks])

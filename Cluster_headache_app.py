@@ -121,6 +121,9 @@ def main():
 
         fig_global = visualizer.create_global_person_years_plot()
         st.plotly_chart(fig_global)
+        
+        fig_3d_patients = visualizer.create_3d_patient_scatter()
+        st.plotly_chart(fig_3d_patients)
 
         fig_total = visualizer.create_total_person_years_plot()
         st.plotly_chart(fig_total)

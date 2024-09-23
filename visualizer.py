@@ -13,16 +13,26 @@ class Visualizer:
         self.global_person_years = simulation_results['global_person_years']
         self.global_std_person_years = simulation_results['global_std_person_years']
         self.ch_groups = simulation_results['ch_groups']
+        self.color_map = {
+            'Episodic Treated': px.colors.qualitative.Plotly[0],
+            'Episodic Untreated': px.colors.qualitative.Plotly[1],
+            'Chronic Treated': px.colors.qualitative.Plotly[2],
+            'Chronic Untreated': px.colors.qualitative.Plotly[3]
+        }
+        self.marker_map = {
+            'Episodic Treated': 'cross',
+            'Episodic Untreated': 'diamond',
+            'Chronic Treated': 'square',
+            'Chronic Untreated': 'circle'
+        }
 
     def create_plot(self, data, title, y_title):
         fig = go.Figure()
-        colors = px.colors.qualitative.Plotly
-        markers = ['circle', 'square', 'diamond', 'cross']
 
         for i, (name, values, std) in enumerate(data):
-            color = colors[i % len(colors)]
+            color = self.color_map[name]
             rgb_color = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            marker = markers[i % len(markers)]
+            marker = self.marker_map[name]
             
             # Lower bound of shaded area
             fig.add_trace(go.Scatter(
@@ -99,20 +109,13 @@ class Visualizer:
                                 'Global Person-Years per Year')
 
     def create_bar_plot(self, groups, values, errors, title, y_title):
-        color_map = {
-            'Episodic Treated': px.colors.qualitative.Plotly[0],
-            'Episodic Untreated': px.colors.qualitative.Plotly[1],
-            'Chronic Treated': px.colors.qualitative.Plotly[2],
-            'Chronic Untreated': px.colors.qualitative.Plotly[3]
-        }
-        
         fig = go.Figure(data=[
             go.Bar(
                 x=groups,
                 y=values,
                 error_y=dict(type='data', array=errors, visible=True),
                 marker=dict(
-                    color=[color_map[group] for group in groups],
+                    color=[self.color_map[group] for group in groups],
                     opacity=0.7,
                     line=dict(width=1, color='white')
                 )
@@ -369,3 +372,61 @@ class Visualizer:
 
     def update_results(self, new_results):
         self.results = new_results
+
+    def create_3d_patient_scatter(self):
+        # Prepare data
+        data = []
+        
+        for group in ['Chronic Untreated', 'Chronic Treated', 'Episodic Untreated', 'Episodic Treated']:
+            x = self.results['global_total_attacks'][group]
+            y = self.results['global_total_attack_durations'][group]
+            z = self.results['global_average_intensity'][group]
+            
+            data.append(go.Scatter3d(
+                x=x,
+                y=y,
+                z=z,
+                mode='markers',
+                name=group,
+                marker=dict(
+                    size=5,
+                    opacity=0.8,
+                    symbol=self.marker_map[group],
+                    color=self.color_map[group]
+                ),
+                hovertemplate=
+                '<b>%{text}</b><br><br>' +
+                'Total Attacks: %{x}<br>' +
+                'Total Duration: %{y} minutes<br>' +
+                'Average Intensity: %{z:.0f}<extra></extra>',
+                text=[group] * len(x)
+            ))
+
+        # Create the 3D scatter plot
+        fig = go.Figure(data=data)
+
+        # Get camera settings from session state or use default
+        camera = st.session_state.get('camera', {
+            'eye': {'x': 1.4, 'y': -1.4, 'z': 0},
+            'up': {'x': 0, 'y': 0, 'z': 1},
+            'center': {'x': 0, 'y': 0, 'z': -.2}
+        })
+
+        # Update the layout
+        fig.update_layout(
+            title='3D Scatter Plot of Patient Data',
+            width=800,
+            height=600,
+            scene=dict(
+                xaxis_title='Total Attacks',
+                yaxis_title='Total Duration (minutes)',
+                zaxis_title='Average Intensity',
+                aspectmode='cube',
+                aspectratio=dict(x=1, y=1, z=0.8),
+                camera=camera
+            ),
+            legend_title='Patient Groups',
+            margin=dict(t=40, b=10, l=10, r=10),
+        )
+
+        return fig
