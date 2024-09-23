@@ -14,7 +14,7 @@ def set_random_seeds(seed=42):
 def create_sidebar_inputs():
     st.sidebar.header("Parameters")
 
-    annual_prevalence_per_100k = st.sidebar.slider("Annual prevalence (per 100,000)", 26, 95, 53, 1)
+    annual_prevalence_per_100k = st.sidebar.slider("Annual prevalence (adults per 100,000)", 26, 95, 53, 1)
 
     total_ch_sufferers = SimulationConfig.world_population * SimulationConfig.adult_fraction * (annual_prevalence_per_100k / 100000)
     
