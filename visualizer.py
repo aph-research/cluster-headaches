@@ -379,7 +379,7 @@ class Visualizer:
         table_html = f"""
         <div class="table-title">{"Intensity-Adjusted Pain Units Experienced Annually"}</div>
         <div class="table-subtitle">{"Values in brackets represent adjusted pain units."}</div>
-        {df.to_html(classes='dataframe')}
+        {df.to_html(classes='dataframe', index=False)}
         """
         
         st.markdown(css, unsafe_allow_html=True)
