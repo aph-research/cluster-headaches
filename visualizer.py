@@ -421,9 +421,9 @@ class Visualizer:
         fig = go.Figure(data=data)
 
         # Get camera settings from session state or use default
-        factor = 1.05
+        factor = 1.0
         camera = st.session_state.get('camera', {
-            'eye': {'x': 1.4*factor, 'y': -1.4*factor, 'z': .1*factor},
+            'eye': {'x': 1.4*factor, 'y': -1.4*factor, 'z': .4*factor},
             'up': {'x': 0, 'y': 0, 'z': 1},
             'center': {'x': 0, 'y': 0, 'z': -.2}
         })
@@ -431,18 +431,18 @@ class Visualizer:
         # Update the layout
         fig.update_layout(
             title='Annual Cluster Headache Attack Data by Patient Group',
-            width=800,
-            height=600,
             scene=dict(
                 xaxis_title='Total Attacks',
                 yaxis_title='Total Duration (minutes)',
                 zaxis_title='Average Intensity',
-                aspectmode='cube',
+                aspectmode='manual',
                 aspectratio=dict(x=1, y=1, z=0.8),
                 camera=camera
             ),
-            margin=dict(t=40, b=10, l=10, r=10),
+            margin=dict(t=40, b=0, l=0, r=0),
             legend=dict(
+                bordercolor='white',  # White border color
+                borderwidth=1,  # Border width
                 itemsizing='constant',
                 itemwidth=30  # Adjust this value to change the size of legend markers
             )

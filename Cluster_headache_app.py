@@ -66,7 +66,7 @@ def create_intensity_scale_inputs(config):
 def main():
     st.title("Global Burden of Cluster Headache Pain")
 
-    # set_random_seeds()
+    set_random_seeds()
 
     # Sidebar: configure simulation parameters
     config = create_sidebar_inputs()
@@ -123,7 +123,7 @@ def main():
         st.plotly_chart(fig_global)
         
         fig_3d_patients = visualizer.create_3d_patient_scatter()
-        st.plotly_chart(fig_3d_patients)
+        st.plotly_chart(fig_3d_patients, use_container_width=True)
 
         fig_total = visualizer.create_total_person_years_plot()
         st.plotly_chart(fig_total)
