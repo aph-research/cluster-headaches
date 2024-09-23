@@ -5,11 +5,6 @@ import warnings
 from dataclasses import dataclass
 import random
 
-# Set random seeds
-def set_random_seeds(seed=42):
-    np.random.seed(seed)
-    random.seed(seed)
-
 def generate_bouts_per_year():
     bout_frequency_datapoints = {
         'Gaul': {'n': 209, 'dist': {1: 0.6, 2: 0.3, 3: 0.1}},

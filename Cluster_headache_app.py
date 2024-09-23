@@ -4,11 +4,11 @@ from SimulationConfig import SimulationConfig
 from simulation import Simulation
 from visualizer import Visualizer
 
-# Set random seeds for reproducibility
-def set_random_seeds(seed=42):
-    np.random.seed(seed)
-    import random
-    random.seed(seed)
+# # Set random seeds for reproducibility
+# def set_random_seeds(seed=42):
+#     np.random.seed(seed)
+#     import random
+#     random.seed(seed)
 
 # Sidebar inputs for simulation parameters
 def create_sidebar_inputs():
@@ -66,7 +66,7 @@ def create_intensity_scale_inputs(config):
 def main():
     st.title("Global Burden of Cluster Headache Pain")
 
-    set_random_seeds()
+    # set_random_seeds()
 
     # Sidebar: configure simulation parameters
     config = create_sidebar_inputs()
