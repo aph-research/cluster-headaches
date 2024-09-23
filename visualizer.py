@@ -440,6 +440,7 @@ class Visualizer:
                 camera=camera
             ),
             margin=dict(t=40, b=0, l=0, r=0),
+            autosize=True,
             legend=dict(
                 bordercolor='white',  # White border color
                 borderwidth=1,  # Border width
