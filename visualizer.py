@@ -413,7 +413,7 @@ class Visualizer:
                 '<b>%{text}</b><br><br>' +
                 'Total Attacks: %{x}<br>' +
                 'Total Duration: %{y} minutes<br>' +
-                'Average Intensity: %{z:.0f}<extra></extra>',
+                'Average Intensity: %{z:.1f}<extra></extra>',
                 text=[group] * len(x)
             ))
 
