@@ -421,8 +421,9 @@ class Visualizer:
         fig = go.Figure(data=data)
 
         # Get camera settings from session state or use default
+        factor = 1.05
         camera = st.session_state.get('camera', {
-            'eye': {'x': 1.4, 'y': -1.4, 'z': 0},
+            'eye': {'x': 1.4*factor, 'y': -1.4*factor, 'z': .1*factor},
             'up': {'x': 0, 'y': 0, 'z': 1},
             'center': {'x': 0, 'y': 0, 'z': -.2}
         })
@@ -440,8 +441,11 @@ class Visualizer:
                 aspectratio=dict(x=1, y=1, z=0.8),
                 camera=camera
             ),
-            legend_title='Patient Groups',
             margin=dict(t=40, b=10, l=10, r=10),
+            legend=dict(
+                itemsizing='constant',
+                itemwidth=30  # Adjust this value to change the size of legend markers
+            )
         )
 
         return fig
