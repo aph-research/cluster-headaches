@@ -141,9 +141,6 @@ def main():
             max_value=config.max_value
         )
         st.plotly_chart(fig_adjusted)
-
-        st.subheader("Intensity-Adjusted Pain Units Experienced Annually")
-        st.write("(Values in brackets represent adjusted pain units.)")
         
         # Update the table dynamically based on transformation parameters
         df = visualizer.create_summary_table(

@@ -308,6 +308,17 @@ class Visualizer:
                 max-width: 150px;
                 text-align: center;
             }
+            .table-title {
+                font-size: 1.0em;
+                font-weight: bold;
+                text-align: left;
+                margin-bottom: 0.5em;
+            }
+            .table-subtitle {
+                font-size: 0.8em;
+                text-align: left;
+                margin-bottom: 1em;
+            }
             .dataframe thead tr:nth-child(1) th {
                 background-color: #e0e0e0;
                 text-align: center;
@@ -365,7 +376,11 @@ class Visualizer:
         </style>
         """
         
-        table_html = df.to_html(index=False, escape=False, classes='dataframe')
+        table_html = f"""
+        <div class="table-title">{"Intensity-Adjusted Pain Units Experienced Annually"}</div>
+        <div class="table-subtitle">{"Values in brackets represent adjusted pain units."}</div>
+        {df.to_html(classes='dataframe')}
+        """
         
         st.markdown(css, unsafe_allow_html=True)
         st.write(table_html, unsafe_allow_html=True)
@@ -414,7 +429,7 @@ class Visualizer:
 
         # Update the layout
         fig.update_layout(
-            title='3D Scatter Plot of Patient Data',
+            title='Annual Cluster Headache Attack Data by Patient Group',
             width=800,
             height=600,
             scene=dict(
