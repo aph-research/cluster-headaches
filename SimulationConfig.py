@@ -14,3 +14,6 @@ class SimulationConfig:
     transformation_display: str = 'Linear'
     max_value: int = 100
     power: float = 2.0
+    migraine_mean: float = 5.4
+    migraine_median: float = 5.8
+    migraine_std: float = 2.0

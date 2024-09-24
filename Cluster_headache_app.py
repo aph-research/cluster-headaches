@@ -51,7 +51,7 @@ def create_intensity_scale_inputs(config):
         )
         transformation_method = method_map[transformation_display]
         
-        max_value = st.number_input("Select maximum value of the scale:", min_value=10, max_value=500, value=100, step=10)
+        max_value = st.number_input("Select maximum value of the scale:", min_value=1, max_value=500, value=100, step=10)
         
         power = st.slider("Select power:", min_value=1.0, max_value=5.0, value=2.0, step=0.1) if transformation_method in ['power', 'power_scaled'] else 2
 
@@ -59,6 +59,18 @@ def create_intensity_scale_inputs(config):
     config.transformation_display = transformation_display
     config.max_value = max_value
     config.power = power
+
+    return config
+
+def create_migraine_inputs(config):
+    with st.sidebar.expander("Migraine Parameters"):
+        migraine_mean = st.number_input("Mean pain intensity", min_value=1.0, max_value=9.0, value=config.migraine_mean, step=0.1)
+        migraine_median = st.number_input("Median pain intensity", min_value=1.0, max_value=9.0, value=config.migraine_median, step=0.1)
+        migraine_std = st.number_input("Standard deviation", min_value=0.1, max_value=4.0, value=config.migraine_std, step=0.1)
+
+    config.migraine_mean = migraine_mean
+    config.migraine_median = migraine_median
+    config.migraine_std = migraine_std
 
     return config
 
@@ -89,6 +101,7 @@ def main():
 
     # Intensity Scale Transformation inputs
     new_config = create_intensity_scale_inputs(config)
+    new_config = create_migraine_inputs(new_config)
     
     if 'simulation' in st.session_state:
         if (new_config.transformation_method != config.transformation_method or
