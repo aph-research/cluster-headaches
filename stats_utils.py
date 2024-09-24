@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon
+from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon, skewnorm
 from scipy.optimize import minimize, curve_fit, OptimizeWarning
 import warnings
 from dataclasses import dataclass
@@ -236,3 +236,12 @@ def transform_intensity(intensities, method='linear', power=2, max_value=100):
 def calculate_adjusted_pain_units(time_amounts, intensities, transformation_method, power, max_value):
     transformed_intensities = transform_intensity(intensities, method=transformation_method, power=power, max_value=max_value)
     return [y * t for y, t in zip(time_amounts, transformed_intensities)]
+
+def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std, size=1000):
+    # Estimate skewness parameter
+    a = -4 * (migraine_mean - migraine_median) / migraine_std
+
+    # Generate samples from the skewed normal distribution
+    data = skewnorm.rvs(a, loc=migraine_mean, scale=migraine_std, size=size)
+    
+    return data

@@ -13,6 +13,7 @@ class Visualizer:
         self.global_person_years = simulation_results['global_person_years']
         self.global_std_person_years = simulation_results['global_std_person_years']
         self.ch_groups = simulation_results['ch_groups']
+        self.migraine_data = simulation_results['migraine_data']
         self.color_map = {
             'Episodic Treated': px.colors.qualitative.Plotly[0],
             'Episodic Untreated': px.colors.qualitative.Plotly[1],
@@ -447,6 +448,37 @@ class Visualizer:
                 itemsizing='constant',
                 itemwidth=30  # Adjust this value to change the size of legend markers
             )
+        )
+
+        return fig
+    
+    def plot_migraine_distribution(self):
+        fig = go.Figure()
+        migraine_data = self.migraine_data
+
+        # Plot the migraine data as a line with markers
+        fig.add_trace(go.Scatter(
+            x=np.arange(len(migraine_data)),
+            y=migraine_data,
+            mode='lines+markers',
+            name='Migraine Pain Intensity',
+            line=dict(color='blue', width=2),
+            marker=dict(
+                symbol='circle',
+                size=[8 if x.is_integer() else 0 for x in np.arange(len(migraine_data))],
+                color='blue',
+            ),
+            hoverinfo='x+y+name'
+        ))
+
+        fig.update_layout(
+            title="Migraine Pain Intensity Distribution",
+            xaxis_title='Sample Index',
+            yaxis_title='Pain Intensity',
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+            yaxis=dict(tickformat=',.0f'),
+            legend_title_text='',
+            template='plotly_white'
         )
 
         return fig

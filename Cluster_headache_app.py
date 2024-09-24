@@ -163,6 +163,9 @@ def main():
         )
         visualizer.display_summary_table(df)
 
+        fig_migraine = visualizer.plot_migraine_distribution()
+        st.plotly_chart(fig_migraine)
+
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
 
