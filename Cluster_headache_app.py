@@ -100,10 +100,8 @@ def main():
     run_simulation = st.sidebar.button("Run Simulation")
 
     # Intensity Scale Transformation inputs
-    new_config = create_intensity_scale_inputs(config)
-    new_config = create_migraine_inputs(new_config)
-    
-    config = new_config  # Update the config with new values
+    config = create_intensity_scale_inputs(config)
+    config = create_migraine_inputs(config)
 
     if run_simulation:
         with st.spinner("Running simulation..."):
