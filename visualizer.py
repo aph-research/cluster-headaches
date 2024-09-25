@@ -454,29 +454,26 @@ class Visualizer:
     
     def plot_migraine_distribution(self):
         fig = go.Figure()
-        migraine_data = self.migraine_data
+        migraine_data_x, migraine_data_y = self.migraine_data
+        print(migraine_data_x)
+        print(migraine_data_y)
 
         # Plot the migraine data as a line with markers
         fig.add_trace(go.Scatter(
-            x=np.arange(len(migraine_data)),
-            y=migraine_data,
-            mode='lines+markers',
+            x=migraine_data_x,
+            y=migraine_data_y,
+            mode='lines',
             name='Migraine Pain Intensity',
             line=dict(color='blue', width=2),
-            marker=dict(
-                symbol='circle',
-                size=[8 if x.is_integer() else 0 for x in np.arange(len(migraine_data))],
-                color='blue',
-            ),
             hoverinfo='x+y+name'
         ))
 
         fig.update_layout(
             title="Migraine Pain Intensity Distribution",
-            xaxis_title='Sample Index',
-            yaxis_title='Pain Intensity',
+            xaxis_title='Pain Intensity',
+            yaxis_title='Probability Density',
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            yaxis=dict(tickformat=',.0f'),
+            #yaxis=dict(tickformat=',.0f'),
             legend_title_text='',
             template='plotly_white'
         )

@@ -237,11 +237,15 @@ def calculate_adjusted_pain_units(time_amounts, intensities, transformation_meth
     transformed_intensities = transform_intensity(intensities, method=transformation_method, power=power, max_value=max_value)
     return [y * t for y, t in zip(time_amounts, transformed_intensities)]
 
-def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std, size=1000):
+def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std, size=10000):
     # Estimate skewness parameter
     a = -4 * (migraine_mean - migraine_median) / migraine_std
-
-    # Generate samples from the skewed normal distribution
-    data = skewnorm.rvs(a, loc=migraine_mean, scale=migraine_std, size=size)
     
-    return data
+    # Define the bin edges
+    bin_edges = np.linspace(0, 10, 101)  # 101 bins between 0 and 10
+
+    # Calculate the PDF values
+    pdf_values = skewnorm.pdf(bin_edges, a, loc=migraine_mean, scale=migraine_std)
+
+    return bin_edges, pdf_values/np.sum(pdf_values)
+    #return histogram/np.sum(histogram)
