@@ -1,9 +1,7 @@
 import numpy as np
 from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon, skewnorm
-from scipy.optimize import minimize, curve_fit, OptimizeWarning
-import warnings
+from scipy.optimize import minimize, curve_fit
 from dataclasses import dataclass
-import random
 
 def generate_bouts_per_year():
     bout_frequency_datapoints = {
@@ -237,15 +235,27 @@ def calculate_adjusted_pain_units(time_amounts, intensities, transformation_meth
     transformed_intensities = transform_intensity(intensities, method=transformation_method, power=power, max_value=max_value)
     return [y * t for y, t in zip(time_amounts, transformed_intensities)]
 
-def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std, size=10000):
+def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std):
     # Estimate skewness parameter
     a = -4 * (migraine_mean - migraine_median) / migraine_std
     
+    # Define the truncation points
+    lower_bound, upper_bound = 0, 10
+
+    # Calculate the CDF at the truncation points
+    cdf_lower = skewnorm.cdf(lower_bound, a, loc=migraine_mean, scale=migraine_std)
+    cdf_upper = skewnorm.cdf(upper_bound, a, loc=migraine_mean, scale=migraine_std)
+
+    # Compute the normalization factor
+    normalization_factor = cdf_upper - cdf_lower
+
     # Define the bin edges
     bin_edges = np.linspace(0, 10, 101)  # 101 bins between 0 and 10
 
     # Calculate the PDF values
     pdf_values = skewnorm.pdf(bin_edges, a, loc=migraine_mean, scale=migraine_std)
 
-    return bin_edges, pdf_values/np.sum(pdf_values)
-    #return histogram/np.sum(histogram)
+    # Normalize the PDF values
+    normalized_pdf_values = pdf_values / normalization_factor
+
+    return bin_edges, normalized_pdf_values

@@ -3,17 +3,17 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import streamlit as st
-from stats_utils import calculate_adjusted_pain_units, calculate_migraine_distribution
 
 class Visualizer:
-    def __init__(self, simulation_results):
-        self.results = simulation_results
-        self.intensities = simulation_results['intensities']
-        self.group_data = simulation_results['group_data']
-        self.global_person_years = simulation_results['global_person_years']
-        self.global_std_person_years = simulation_results['global_std_person_years']
-        self.ch_groups = simulation_results['ch_groups']
-        self.migraine_data = simulation_results['migraine_data']
+    def __init__(self, simulation):
+        self.simulation = simulation
+        self.results = simulation.get_results()
+        self.intensities = self.results['intensities']
+        self.group_data = self.results['group_data']
+        self.global_person_years = self.results['global_person_years']
+        self.global_std_person_years = self.results['global_std_person_years']
+        self.ch_groups = self.results['ch_groups']
+        self.migraine_data = self.results['migraine_data']
         self.color_map = {
             'Episodic Treated': px.colors.qualitative.Plotly[0],
             'Episodic Untreated': px.colors.qualitative.Plotly[1],
@@ -191,14 +191,12 @@ class Visualizer:
     
     def create_adjusted_pain_units_plot(self, transformation_method, transformation_display, power, max_value):
         adjusted_data = []
+        self.simulation.config.transformation_method = transformation_method
+        self.simulation.config.power = power
+        self.simulation.config.max_value = max_value
+        self.simulation.calculate_adjusted_pain_units()
         for name in self.results['ch_groups'].keys():
-            values = calculate_adjusted_pain_units(
-                self.results['global_person_years'][name],
-                self.results['intensities'],
-                transformation_method,
-                power,
-                max_value
-            )
+            values = self.simulation.adjusted_pain_units[name]
             std = [0] * len(values)
             adjusted_data.append((name, values, std))
 
@@ -224,20 +222,25 @@ class Visualizer:
             'Average Patient': {key: 0 for key in ['Minutes', 'High-Intensity Minutes', 'Adjusted Units', 'High-Intensity Adjusted Units']},
             'Global Estimate': {key: 0 for key in ['Person-Years', 'High-Intensity Person-Years', 'Adjusted Units', 'High-Intensity Adjusted Units']}
         }
-    
+
+        self.simulation.config.transformation_method = transformation_method
+        self.simulation.config.power = power
+        self.simulation.config.max_value = max_value
+
         for group in self.results['ch_groups'].keys():
             avg_data = next(avg for name, avg, _, _, _ in self.results['group_data'] if name == group)
             avg_minutes = sum(avg_data)
             avg_high_minutes = sum(avg_data[90:])
             global_years = sum(self.results['global_person_years'][group])
             global_high_years = sum(self.results['global_person_years'][group][90:])
-            
-            # Use the calculate_adjusted_pain_units function from the simulation results
-            avg_adjusted_units = sum(calculate_adjusted_pain_units(avg_data, self.results['intensities'], transformation_method, power, max_value))
-            avg_high_adjusted_units = sum(calculate_adjusted_pain_units(avg_data[90:], self.results['intensities'][90:], transformation_method, power, max_value))
-            
-            global_adjusted_units = sum(calculate_adjusted_pain_units(self.results['global_person_years'][group], self.results['intensities'], transformation_method, power, max_value))
-            global_high_adjusted_units = sum(calculate_adjusted_pain_units(self.results['global_person_years'][group][90:], self.results['intensities'][90:], transformation_method, power, max_value))
+
+            self.simulation.global_person_years[group] = self.results['global_person_years'][group]
+            self.simulation.intensities = self.results['intensities']
+            self.simulation.calculate_adjusted_pain_units()
+            global_adjusted_units = sum(self.simulation.adjusted_pain_units[group])
+            avg_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group])
+            avg_high_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group][90:])
+            global_high_adjusted_units = sum(self.simulation.adjusted_pain_units[group][90:])
             
             row = {
                 'Group': group,
@@ -454,7 +457,10 @@ class Visualizer:
     
     def plot_migraine_distribution(self, migraine_mean, migraine_median, migraine_std):
         fig = go.Figure()
-        migraine_data_x, migraine_data_y = calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std)
+        migraine_data_x, migraine_data_y = self.simulation.calculate_migraine_data(migraine_mean, migraine_median, migraine_std)
+        adjusted_global_population = 1_040_000_000 / 0.144
+        total_migraine_sufferers = adjusted_global_population * self.results['config'].migraine_prevalence_percentage
+        
 
         # Plot the migraine data as a line with markers
         fig.add_trace(go.Scatter(

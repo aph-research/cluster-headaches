@@ -1,8 +1,6 @@
-# simulation.py
 import numpy as np
 from collections import defaultdict
-from models import Patient, Attack
-from SimulationConfig import SimulationConfig
+from models import Patient
 from stats_utils import calculate_adjusted_pain_units, calculate_migraine_distribution
 
 class Simulation:
@@ -138,9 +136,10 @@ class Simulation:
             self.config.migraine_median,
             self.config.migraine_std
         )
-        
+
     def get_results(self):
         return {
+            'config': self.config,
             'intensities': self.intensities,
             'group_data': self.group_data,
             'global_person_years': self.global_person_years,

@@ -111,8 +111,7 @@ def main():
 
     # If simulation has been run, process and display results
     if 'simulation_run' in st.session_state and st.session_state.simulation_run:
-        results = st.session_state.simulation.get_results()
-        visualizer = Visualizer(results)
+        visualizer = Visualizer(simulation)
     
         # Visualization sections
         fig_avg = visualizer.create_average_minutes_plot()
@@ -149,12 +148,12 @@ def main():
         )
         visualizer.display_summary_table(df)
 
-        fig_migraine = visualizer.plot_migraine_distribution(
-            config.migraine_mean,
-            config.migraine_median,
-            config.migraine_std
-        )
-        st.plotly_chart(fig_migraine)
+        # fig_migraine = visualizer.plot_migraine_distribution(
+        #     config.migraine_mean,
+        #     config.migraine_median,
+        #     config.migraine_std
+        # )
+        # st.plotly_chart(fig_migraine)
 
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
