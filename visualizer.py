@@ -3,7 +3,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import streamlit as st
-from simulation import calculate_adjusted_pain_units
+from stats_utils import calculate_adjusted_pain_units, calculate_migraine_distribution
 
 class Visualizer:
     def __init__(self, simulation_results):
@@ -233,11 +233,11 @@ class Visualizer:
             global_high_years = sum(self.results['global_person_years'][group][90:])
             
             # Use the calculate_adjusted_pain_units function from the simulation results
-            avg_adjusted_units = sum(self.results['calculate_adjusted_pain_units'](avg_data, self.results['intensities'], transformation_method, power, max_value))
-            avg_high_adjusted_units = sum(self.results['calculate_adjusted_pain_units'](avg_data[90:], self.results['intensities'][90:], transformation_method, power, max_value))
+            avg_adjusted_units = sum(calculate_adjusted_pain_units(avg_data, self.results['intensities'], transformation_method, power, max_value))
+            avg_high_adjusted_units = sum(calculate_adjusted_pain_units(avg_data[90:], self.results['intensities'][90:], transformation_method, power, max_value))
             
-            global_adjusted_units = sum(self.results['calculate_adjusted_pain_units'](self.results['global_person_years'][group], self.results['intensities'], transformation_method, power, max_value))
-            global_high_adjusted_units = sum(self.results['calculate_adjusted_pain_units'](self.results['global_person_years'][group][90:], self.results['intensities'][90:], transformation_method, power, max_value))
+            global_adjusted_units = sum(calculate_adjusted_pain_units(self.results['global_person_years'][group], self.results['intensities'], transformation_method, power, max_value))
+            global_high_adjusted_units = sum(calculate_adjusted_pain_units(self.results['global_person_years'][group][90:], self.results['intensities'][90:], transformation_method, power, max_value))
             
             row = {
                 'Group': group,
@@ -452,11 +452,9 @@ class Visualizer:
 
         return fig
     
-    def plot_migraine_distribution(self):
+    def plot_migraine_distribution(self, migraine_mean, migraine_median, migraine_std):
         fig = go.Figure()
-        migraine_data_x, migraine_data_y = self.migraine_data
-        print(migraine_data_x)
-        print(migraine_data_y)
+        migraine_data_x, migraine_data_y = calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std)
 
         # Plot the migraine data as a line with markers
         fig.add_trace(go.Scatter(

@@ -103,18 +103,6 @@ def main():
     new_config = create_intensity_scale_inputs(config)
     new_config = create_migraine_inputs(new_config)
     
-    if 'simulation' in st.session_state:
-        if (new_config.transformation_method != config.transformation_method or
-            new_config.power != config.power or
-            new_config.max_value != config.max_value):
-            st.session_state.simulation.update_transformation_params(
-                new_config.transformation_method,
-                new_config.power,
-                new_config.max_value
-            )
-            # Force a rerun to update the display
-            st.experimental_rerun()
-    
     config = new_config  # Update the config with new values
 
     if run_simulation:
@@ -163,7 +151,11 @@ def main():
         )
         visualizer.display_summary_table(df)
 
-        fig_migraine = visualizer.plot_migraine_distribution()
+        fig_migraine = visualizer.plot_migraine_distribution(
+            config.migraine_mean,
+            config.migraine_median,
+            config.migraine_std
+        )
         st.plotly_chart(fig_migraine)
 
     else:

@@ -3,7 +3,7 @@ import numpy as np
 from collections import defaultdict
 from models import Patient, Attack
 from SimulationConfig import SimulationConfig
-from stats_utils import calculate_adjusted_pain_units, generate_attacks_per_day, calculate_migraine_distribution
+from stats_utils import calculate_adjusted_pain_units, calculate_migraine_distribution
 
 class Simulation:
     def __init__(self, config):
@@ -32,11 +32,6 @@ class Simulation:
     def calculate_ch_groups(self):
         annual_prevalence = self.config.annual_prevalence_per_100k / 100000
         self.total_ch_sufferers = self.config.world_population * self.config.adult_fraction * annual_prevalence
-
-        prop_chronic = self.config.prop_chronic
-        prop_treated = self.config.prop_treated
-        prop_episodic = self.config.prop_chronic
-        prop_untreated = self.config.prop_treated
 
         self.ch_groups = {
             'Episodic Treated': int(self.total_ch_sufferers * self.config.prop_episodic * self.config.prop_treated),
@@ -137,12 +132,6 @@ class Simulation:
                 self.config.max_value
             )
 
-    def update_transformation_params(self, transformation_method, power, max_value):
-        self.config.transformation_method = transformation_method
-        self.config.power = power
-        self.config.max_value = max_value
-        self.calculate_adjusted_pain_units()
-
     def calculate_migraine_data(self):
         self.migraine_data = calculate_migraine_distribution(
             self.config.migraine_mean,
@@ -162,6 +151,5 @@ class Simulation:
             'ch_groups': self.ch_groups,
             'adjusted_pain_units': self.adjusted_pain_units,
             'adjusted_avg_pain_units': self.adjusted_avg_pain_units,
-            'calculate_adjusted_pain_units': calculate_adjusted_pain_units,
             'migraine_data': self.migraine_data
         }
