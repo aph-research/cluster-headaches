@@ -191,8 +191,8 @@ def generate_max_pain_intensity(is_treated, size):
     sd_moderate_severe = 2.0
     scale_very_severe = .7 if is_treated else 0.5
     
-    mild_to_moderate = truncnorm.rvs((1-mean_mild_moderate)/sd_mild_moderate, np.inf, loc=mean_mild_moderate, scale=sd_mild_moderate, size=size)
-    moderate_to_severe = truncnorm.rvs((1-mean_moderate_severe)/sd_moderate_severe, np.inf, loc=mean_moderate_severe, scale=sd_moderate_severe, size=size)
+    mild_to_moderate = truncnorm.rvs((0-mean_mild_moderate)/sd_mild_moderate, np.inf, loc=mean_mild_moderate, scale=sd_mild_moderate, size=size)
+    moderate_to_severe = truncnorm.rvs((0-mean_moderate_severe)/sd_moderate_severe, np.inf, loc=mean_moderate_severe, scale=sd_moderate_severe, size=size)
     very_severe = 10 - expon.rvs(scale=scale_very_severe, size=size)
     
     if is_treated:
@@ -203,7 +203,7 @@ def generate_max_pain_intensity(is_treated, size):
     intensities = np.where(choices == 0, mild_to_moderate,
                   np.where(choices == 1, moderate_to_severe, very_severe))
     
-    return np.round(np.clip(intensities, 1, 10), decimals=1)
+    return np.round(np.clip(intensities, 0, 10), decimals=1)
 
 def transform_intensity(intensities, method='linear', power=2, max_value=100):
     if method == 'linear':
@@ -258,4 +258,4 @@ def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std
     # Normalize the PDF values
     normalized_pdf_values = pdf_values / normalization_factor
 
-    return bin_edges, normalized_pdf_values
+    return np.array(bin_edges), np.array(normalized_pdf_values)

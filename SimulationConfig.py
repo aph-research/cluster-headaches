@@ -16,5 +16,6 @@ class SimulationConfig:
     power: float = 2.0
     migraine_mean: float = 5.4
     migraine_median: float = 5.8
-    migraine_std: float = 2.0
+    migraine_std: float = 1.0
     migraine_prevalence_percentage: float = 0.144
+    migraine_fraction_of_year_in_attacks: float = .085

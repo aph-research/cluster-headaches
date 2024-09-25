@@ -131,11 +131,15 @@ class Simulation:
             )
 
     def calculate_migraine_data(self):
-        self.migraine_data = calculate_migraine_distribution(
+        self.migraine_data = defaultdict(list)
+        self.migraine_data['x'], self.migraine_data['y'] = calculate_migraine_distribution(
             self.config.migraine_mean,
             self.config.migraine_median,
             self.config.migraine_std
         )
+        adjusted_global_population = 1_040_000_000 / 0.144
+        total_migraine_sufferers = adjusted_global_population * self.config.migraine_prevalence_percentage
+        self.migraine_data['y'] = self.migraine_data['y'] * total_migraine_sufferers * self.config.migraine_fraction_of_year_in_attacks
 
     def get_results(self):
         return {

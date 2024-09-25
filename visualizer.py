@@ -18,13 +18,15 @@ class Visualizer:
             'Episodic Treated': px.colors.qualitative.Plotly[0],
             'Episodic Untreated': px.colors.qualitative.Plotly[1],
             'Chronic Treated': px.colors.qualitative.Plotly[2],
-            'Chronic Untreated': px.colors.qualitative.Plotly[3]
+            'Chronic Untreated': px.colors.qualitative.Plotly[3],
+            'Migraine': px.colors.qualitative.Plotly[5]
         }
         self.marker_map = {
             'Episodic Treated': 'cross',
             'Episodic Untreated': 'diamond',
             'Chronic Treated': 'square',
-            'Chronic Untreated': 'circle'
+            'Chronic Untreated': 'circle',
+            'Migraine': 'triangle-up'
         }
 
     def create_plot(self, data, title, y_title):
@@ -455,30 +457,64 @@ class Visualizer:
 
         return fig
     
-    def plot_migraine_distribution(self, migraine_mean, migraine_median, migraine_std):
+    def plot_migraine_vs_ch_person_years(self, migraine_mean, migraine_median, migraine_std):
         fig = go.Figure()
-        migraine_data_x, migraine_data_y = self.simulation.calculate_migraine_data(migraine_mean, migraine_median, migraine_std)
-        adjusted_global_population = 1_040_000_000 / 0.144
-        total_migraine_sufferers = adjusted_global_population * self.results['config'].migraine_prevalence_percentage
         
+        self.simulation.config.migraine_mean = migraine_mean
+        self.simulation.config.migraine_median = migraine_median
+        self.simulation.config.migraine_std = migraine_std
+
+        self.simulation.calculate_migraine_data()
+
+        global_person_years_ch_all = sum(self.global_person_years[group] for group in self.global_person_years.keys())
 
         # Plot the migraine data as a line with markers
         fig.add_trace(go.Scatter(
-            x=migraine_data_x,
-            y=migraine_data_y,
-            mode='lines',
-            name='Migraine Pain Intensity',
-            line=dict(color='blue', width=2),
+            x=self.simulation.migraine_data['x'],
+            y=self.simulation.migraine_data['y'],
+            mode='lines+markers',
+            name='Migraine',
+            line=dict(color=self.color_map['Migraine'], width=2),
+            marker=dict(
+                    symbol=self.marker_map['Migraine'],
+                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    color=self.color_map['Migraine'],
+                ),
             hoverinfo='x+y+name'
         ))
 
+        # Plot the global_person_years_ch_all as another line with markers
+        fig.add_trace(go.Scatter(
+            x=self.simulation.migraine_data['x'],
+            y=global_person_years_ch_all,
+            mode='lines+markers',
+            name='Cluster Headache',
+            line=dict(color=self.color_map['Episodic Untreated'], width=2),
+            marker=dict(
+                    symbol=self.marker_map['Episodic Untreated'],
+                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    color=self.color_map['Episodic Untreated'],
+                ),
+            hoverinfo='x+y+name'
+        ))
         fig.update_layout(
-            title="Migraine Pain Intensity Distribution",
+            title="Global Annual Person-Years: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',
-            yaxis_title='Probability Density',
+            yaxis_title='Global Person-Years per Year',
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            #yaxis=dict(tickformat=',.0f'),
+            yaxis=dict(tickformat=',.0f', type='linear'),
             legend_title_text='',
+            legend=dict(
+                itemsizing='constant',
+                itemwidth=30,
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01,
+                bgcolor="rgba(0,0,0,0.5)",
+                bordercolor="white",
+                borderwidth=1
+            ),
             template='plotly_white'
         )
 
