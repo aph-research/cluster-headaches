@@ -143,6 +143,7 @@ def main():
         # Update the table dynamically based on transformation parameters
         df = visualizer.create_summary_table(
             transformation_method=config.transformation_method,
+            transformation_display=config.transformation_display,
             power=config.power,
             max_value=config.max_value
         )

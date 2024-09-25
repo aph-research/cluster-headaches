@@ -214,7 +214,7 @@ class Visualizer:
 
         return fig_adjusted
         
-    def create_summary_table(self, transformation_method, power, max_value):
+    def create_summary_table(self, transformation_method, transformation_display, power, max_value):
         def format_with_adjusted(value, adjusted):
             return f"{value:,.0f} ({adjusted:,.0f})"
     
@@ -226,6 +226,7 @@ class Visualizer:
         }
 
         self.simulation.config.transformation_method = transformation_method
+        self.simulation.config.transformation_display = transformation_display
         self.simulation.config.power = power
         self.simulation.config.max_value = max_value
 
@@ -381,13 +382,11 @@ class Visualizer:
             }
         </style>
         """
-        
         table_html = f"""
-        <div class="table-title">{"Intensity-Adjusted Pain Units Experienced Annually"}</div>
-        <div class="table-subtitle">{"Values in brackets represent adjusted pain units."}</div>
+        <div class="table-title">Intensity-Adjusted Pain Units Experienced Annually ({self.simulation.config.transformation_display} Transformation)</div>
+        <div class="table-subtitle">Values in brackets represent adjusted pain units.</div>
         {df.to_html(classes='dataframe', index=False)}
         """
-        
         st.markdown(css, unsafe_allow_html=True)
         st.write(table_html, unsafe_allow_html=True)
 
@@ -498,7 +497,7 @@ class Visualizer:
             hoverinfo='x+y+name'
         ))
         fig.update_layout(
-            title="Global Annual Person-Years: Migraine vs Cluster Headache",
+            title="Global Annual Person-Years in Pain: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',
             yaxis_title='Global Person-Years per Year',
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),

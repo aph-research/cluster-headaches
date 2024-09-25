@@ -12,7 +12,7 @@ class SimulationConfig:
     percent_of_patients_to_simulate: float = 0.02
     transformation_method: str = 'linear'
     transformation_display: str = 'Linear'
-    max_value: int = 100
+    max_value: int = 1
     power: float = 2.0
     migraine_mean: float = 5.4
     migraine_median: float = 5.8
