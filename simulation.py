@@ -15,6 +15,9 @@ class Simulation:
         self.global_total_attacks = {}
         self.global_total_attack_durations = {}
         self.global_average_intensity = {}
+        self.adjusted_pain_units = {}
+        self.adjusted_avg_pain_units = {}
+        self.adjusted_pain_units_migraine = np.array([])
         self.group_data = []
         self.total_ch_sufferers = None
         self.migraine_data = []
@@ -24,8 +27,8 @@ class Simulation:
         self.generate_population()
         self.simulate_year()
         self.calculate_results()
-        self.calculate_adjusted_pain_units()
         self.calculate_migraine_data()
+        self.calculate_adjusted_pain_units()
 
     def calculate_ch_groups(self):
         annual_prevalence = self.config.annual_prevalence_per_100k / 100000
@@ -111,8 +114,6 @@ class Simulation:
         self.global_average_intensity = global_average_intensity
 
     def calculate_adjusted_pain_units(self):
-        self.adjusted_pain_units = {}
-        self.adjusted_avg_pain_units = {}
         for group in self.ch_groups.keys():
             self.adjusted_pain_units[group] = calculate_adjusted_pain_units(
                 self.global_person_years[group],
@@ -129,6 +130,13 @@ class Simulation:
                 self.config.power,
                 self.config.max_value
             )
+        self.adjusted_pain_units_migraine = calculate_adjusted_pain_units(
+            self.migraine_data['y'],
+            self.intensities,
+            self.config.transformation_method,
+            self.config.power,
+            self.config.max_value
+        )
 
     def calculate_migraine_data(self):
         self.migraine_data = defaultdict(list)

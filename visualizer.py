@@ -213,7 +213,71 @@ class Visualizer:
         fig_adjusted.update_layout(yaxis=dict(range=[0, max_adjusted_value * 1.1]))
 
         return fig_adjusted
+
+    def create_adjusted_pain_units_plot_comparison_migraine(self, transformation_method, transformation_display, power, max_value):
+        self.simulation.config.transformation_method = transformation_method
+        self.simulation.config.power = power
+        self.simulation.config.max_value = max_value
+        self.simulation.calculate_adjusted_pain_units()
+
+        global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
         
+        fig = go.Figure()
+        # Plot the global_person_years_ch_all as another line with markers
+        fig.add_trace(go.Scatter(
+            x=self.intensities,
+            y=global_person_years_ch_all_adjusted,
+            mode='lines+markers',
+            name='Cluster Headache',
+            line=dict(color=self.color_map['Episodic Untreated'], width=2),
+            marker=dict(
+                    symbol=self.marker_map['Episodic Untreated'],
+                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    color=self.color_map['Episodic Untreated'],
+                ),
+            hoverinfo='x+y+name'
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=self.intensities,
+            y=self.simulation.adjusted_pain_units_migraine,
+            mode='lines+markers',
+            name='Migraine',
+            line=dict(color=self.color_map['Migraine'], width=2),
+            marker=dict(
+                    symbol=self.marker_map['Migraine'],
+                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    color=self.color_map['Migraine'],
+                ),
+            hoverinfo='x+y+name'
+        ))
+
+        fig.update_layout(
+            title=f"Intensity-Adjusted Pain Units: Migraine vs Cluster Headache ({transformation_display} Transformation)",
+            xaxis_title='Pain Intensity',
+            yaxis_title='Intensity-Adjusted Pain Units',
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+            yaxis=dict(tickformat=',.0f', type='linear'),
+            legend_title_text='',
+            legend=dict(
+                itemsizing='constant',
+                itemwidth=30,
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01,
+                bgcolor="rgba(0,0,0,0.5)",
+                bordercolor="white",
+                borderwidth=1
+            ),
+            template='plotly_white'
+        )
+
+        #max_adjusted_value = max(max(values) for _, values, _ in adjusted_data)
+        #fig.update_layout(yaxis=dict(range=[0, max_adjusted_value * 1.1]))
+
+        return fig
+            
     def create_summary_table(self, transformation_method, transformation_display, power, max_value):
         def format_with_adjusted(value, adjusted):
             return f"{value:,.0f} ({adjusted:,.0f})"
@@ -456,7 +520,7 @@ class Visualizer:
 
         return fig
     
-    def plot_migraine_vs_ch_person_years(self, migraine_mean, migraine_median, migraine_std):
+    def plot_ch_vs_migraine_person_years(self, migraine_mean, migraine_median, migraine_std):
         fig = go.Figure()
         
         self.simulation.config.migraine_mean = migraine_mean
@@ -467,9 +531,24 @@ class Visualizer:
 
         global_person_years_ch_all = sum(self.global_person_years[group] for group in self.global_person_years.keys())
 
+        # Plot the global_person_years_ch_all as another line with markers
+        fig.add_trace(go.Scatter(
+            x=self.intensities,
+            y=global_person_years_ch_all,
+            mode='lines+markers',
+            name='Cluster Headache',
+            line=dict(color=self.color_map['Episodic Untreated'], width=2),
+            marker=dict(
+                    symbol=self.marker_map['Episodic Untreated'],
+                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    color=self.color_map['Episodic Untreated'],
+                ),
+            hoverinfo='x+y+name'
+        ))
+
         # Plot the migraine data as a line with markers
         fig.add_trace(go.Scatter(
-            x=self.simulation.migraine_data['x'],
+            x=self.intensities,
             y=self.simulation.migraine_data['y'],
             mode='lines+markers',
             name='Migraine',
@@ -482,20 +561,6 @@ class Visualizer:
             hoverinfo='x+y+name'
         ))
 
-        # Plot the global_person_years_ch_all as another line with markers
-        fig.add_trace(go.Scatter(
-            x=self.simulation.migraine_data['x'],
-            y=global_person_years_ch_all,
-            mode='lines+markers',
-            name='Cluster Headache',
-            line=dict(color=self.color_map['Episodic Untreated'], width=2),
-            marker=dict(
-                    symbol=self.marker_map['Episodic Untreated'],
-                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
-                    color=self.color_map['Episodic Untreated'],
-                ),
-            hoverinfo='x+y+name'
-        ))
         fig.update_layout(
             title="Global Annual Person-Years in Pain: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',

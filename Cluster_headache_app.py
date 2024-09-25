@@ -51,7 +51,7 @@ def create_intensity_scale_inputs(config):
         )
         transformation_method = method_map[transformation_display]
         
-        max_value = st.number_input("Select maximum value of the scale:", min_value=1, max_value=500, value=100, step=10)
+        max_value = st.number_input("Select maximum value of the scale:", min_value=1, max_value=1000, value=SimulationConfig.max_value, step=1)
         
         power = st.slider("Select power:", min_value=1.0, max_value=5.0, value=2.0, step=0.1) if transformation_method in ['power', 'power_scaled'] else 2
 
@@ -149,12 +149,21 @@ def main():
         )
         visualizer.display_summary_table(df)
 
-        fig_migraine = visualizer.plot_migraine_vs_ch_person_years(
+        fig_migraine = visualizer.plot_ch_vs_migraine_person_years(
             config.migraine_mean,
             config.migraine_median,
             config.migraine_std
         )
         st.plotly_chart(fig_migraine)
+
+        fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine(
+            transformation_method=config.transformation_method,
+            transformation_display=config.transformation_display,
+            power=config.power,
+            max_value=config.max_value,
+        )
+        st.plotly_chart(fig_migrain_comparison)
+
 
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
