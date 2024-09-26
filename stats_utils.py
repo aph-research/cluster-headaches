@@ -218,7 +218,7 @@ def transform_intensity(intensities, method='linear', power=2, max_value=100, ba
     elif method == 'power':
         return (intensities / 10) ** power * max_value
     elif method == 'exponential':
-        return (base**(intensities/scaling_factor) - 1) * (max_value / (base**(10/scaling_factor) - 1))
+        return (base**(scaling_factor * intensities) - 1) * (max_value / (base**(scaling_factor * 10) - 1))
     else:
         raise ValueError("Invalid method.")
 

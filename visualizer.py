@@ -229,7 +229,7 @@ class Visualizer:
                     color=self.color_map['Episodic Untreated'],
                 ),
             hoverinfo='x+y+name',
-            yaxis='y2'  # Assign to secondary y-axis
+            #yaxis='y2'  # Assign to secondary y-axis
         ))
         
         fig.add_trace(go.Scatter(
@@ -256,19 +256,19 @@ class Visualizer:
             ),
             legend_title_text='',
             yaxis=dict(
-                title='Intensity-Adjusted Pain Units: Migraine',
-                titlefont=dict(color=self.color_map['Migraine']),
-                tickfont=dict(color=self.color_map['Migraine']),
+                title='Intensity-Adjusted Pain Units',
+                #titlefont=dict(color=self.color_map['Migraine']),
+                #tickfont=dict(color=self.color_map['Migraine']),
                 tickformat=',.0f'
             ),
-            yaxis2=dict(
-                title='Intensity-Adjusted Pain Units: Cluster Headache',
-                titlefont=dict(color=self.color_map['Episodic Untreated']),
-                tickfont=dict(color=self.color_map['Episodic Untreated']),
-                tickformat=',.0f',
-                overlaying='y',
-                side='right'
-            ),
+            # yaxis2=dict(
+            #     title='Intensity-Adjusted Pain Units: Cluster Headache',
+            #     titlefont=dict(color=self.color_map['Episodic Untreated']),
+            #     tickfont=dict(color=self.color_map['Episodic Untreated']),
+            #     tickformat=',.0f',
+            #     overlaying='y',
+            #     side='right'
+            # ),
             legend=dict(
                 itemsizing='constant',
                 itemwidth=30,

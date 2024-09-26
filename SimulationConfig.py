@@ -15,7 +15,7 @@ class SimulationConfig:
     max_value: int = 1
     power: float = 2.0
     base: float = 10
-    scaling_factor: float = 2.5
+    scaling_factor: float = 1.0
     migraine_mean: float = 5.4
     migraine_median: float = 5.8
     migraine_std: float = 1.0

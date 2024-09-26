@@ -114,7 +114,6 @@ class Simulation:
         self.global_average_intensity = global_average_intensity
 
     def calculate_adjusted_pain_units(self):
-        print("Calculating adjusted pain units")
         for group in self.ch_groups.keys():
             self.adjusted_pain_units[group] = calculate_adjusted_pain_units(
                 self.global_person_years[group],
@@ -146,7 +145,6 @@ class Simulation:
         )
 
     def calculate_migraine_data(self):
-        print("Calculating migraine data")
         self.migraine_data = defaultdict(list)
         self.migraine_data['x'], self.migraine_data['y'] = calculate_migraine_distribution(
             self.config.migraine_mean,
