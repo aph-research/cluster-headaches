@@ -201,8 +201,8 @@ class Visualizer:
         fig_adjusted = go.Figure()
         fig_adjusted = self.create_plot(
             adjusted_data,
-            title=f"Intensity-Adjusted Pain Units by Cluster Headache Group ({self.simulation.config.transformation_display} Transformation)",
-            y_title="Intensity-Adjusted Pain Units"
+            title=f"Annual Intensity-Adjusted Person-Years by Cluster Headache Group ({self.simulation.config.transformation_display} Transformation)",
+            y_title="Annual Intensity-Adjusted Person-Years"
         )
 
         max_adjusted_value = max(max(values) for _, values, _ in adjusted_data)
@@ -225,7 +225,7 @@ class Visualizer:
             line=dict(color=self.color_map['Episodic Untreated'], width=2),
             marker=dict(
                     symbol=self.marker_map['Episodic Untreated'],
-                    size=[8 if x.is_integer() else 0 for x in self.intensities[80:]],
+                    size = 8,
                     color=self.color_map['Episodic Untreated'],
                 ),
             hoverinfo='x+y+name',
@@ -240,14 +240,14 @@ class Visualizer:
             line=dict(color=self.color_map['Migraine'], width=2),
             marker=dict(
                     symbol=self.marker_map['Migraine'],
-                    size=[8 if x.is_integer() else 0 for x in self.intensities[80:]],
+                    size = 8,
                     color=self.color_map['Migraine'],
                 ),
             hoverinfo='x+y+name'
         ))
 
         fig.update_layout(
-            title=f"Intensity-Adjusted Pain Units: Migraine vs Cluster Headache ({self.simulation.config.transformation_display} Transformation)",
+            title=f"Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache ({self.simulation.config.transformation_display} Transformation)",
             xaxis=dict(
                 title='Pain Intensity',
                 tickmode='array',
@@ -256,19 +256,12 @@ class Visualizer:
             ),
             legend_title_text='',
             yaxis=dict(
-                title='Intensity-Adjusted Pain Units',
+                title='Annual Intensity-Adjusted Person-Years of Pain',
                 #titlefont=dict(color=self.color_map['Migraine']),
                 #tickfont=dict(color=self.color_map['Migraine']),
                 tickformat=',.0f'
             ),
-            # yaxis2=dict(
-            #     title='Intensity-Adjusted Pain Units: Cluster Headache',
-            #     titlefont=dict(color=self.color_map['Episodic Untreated']),
-            #     tickfont=dict(color=self.color_map['Episodic Untreated']),
-            #     tickformat=',.0f',
-            #     overlaying='y',
-            #     side='right'
-            # ),
+
             legend=dict(
                 itemsizing='constant',
                 itemwidth=30,
@@ -282,9 +275,6 @@ class Visualizer:
             ),
             template='plotly_dark'
         )
-
-        #max_adjusted_value = max(max(values) for _, values, _ in adjusted_data)
-        #fig.update_layout(yaxis=dict(range=[0, max_adjusted_value * 1.1]))
 
         return fig
             
@@ -451,8 +441,8 @@ class Visualizer:
         </style>
         """
         table_html = f"""
-        <div class="table-title">Intensity-Adjusted Pain Units Experienced Annually ({self.simulation.config.transformation_display} Transformation)</div>
-        <div class="table-subtitle">Values in brackets represent adjusted pain units.</div>
+        <div class="table-title">Intensity-Adjusted Person-Years Experienced Annually ({self.simulation.config.transformation_display} Transformation)</div>
+        <div class="table-subtitle">Values in brackets represent intensity-adjusted person-years.</div>
         {df.to_html(classes='dataframe', index=False)}
         """
         st.markdown(css, unsafe_allow_html=True)
@@ -562,7 +552,7 @@ class Visualizer:
         ))
 
         fig.update_layout(
-            title="Global Annual Person-Years in Pain: Migraine vs Cluster Headache",
+            title="Global Annual Person-Years of Pain: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
             yaxis=dict(
