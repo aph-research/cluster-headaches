@@ -121,7 +121,9 @@ class Simulation:
                 self.intensities,
                 self.config.transformation_method,
                 self.config.power,
-                self.config.max_value
+                self.config.max_value,
+                self.config.base,
+                self.config.scaling_factor
             )
             avg_data = next(avg for name, avg, _, _, _ in self.group_data if name == group)
             self.adjusted_avg_pain_units[group] = calculate_adjusted_pain_units(
@@ -129,14 +131,18 @@ class Simulation:
                 self.intensities,
                 self.config.transformation_method,
                 self.config.power,
-                self.config.max_value
+                self.config.max_value,
+                self.config.base,
+                self.config.scaling_factor
             )
         self.adjusted_pain_units_migraine = calculate_adjusted_pain_units(
             self.migraine_data['y'],
             self.intensities,
             self.config.transformation_method,
             self.config.power,
-            self.config.max_value
+            self.config.max_value,
+            self.config.base,
+            self.config.scaling_factor
         )
 
     def calculate_migraine_data(self):
@@ -151,11 +157,13 @@ class Simulation:
         total_migraine_sufferers = adjusted_global_population * self.config.migraine_prevalence_percentage
         self.migraine_data['y'] = self.migraine_data['y'] * total_migraine_sufferers * self.config.migraine_fraction_of_year_in_attacks
 
-    def update_transformation_params(self, transformation_method, transformation_display, power, max_value, migraine_mean, migraine_median, migraine_std):
+    def update_transformation_params(self, transformation_method, transformation_display, power, max_value, base, scaling_factor, migraine_mean, migraine_median, migraine_std):
         self.config.transformation_method = transformation_method
         self.config.transformation_display = transformation_display
         self.config.power = power
         self.config.max_value = max_value
+        self.config.base = base
+        self.config.scaling_factor = scaling_factor
         self.config.migraine_mean = migraine_mean
         self.config.migraine_median = migraine_median
         self.config.migraine_std = migraine_std

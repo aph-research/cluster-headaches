@@ -205,7 +205,7 @@ def generate_max_pain_intensity(is_treated, size):
     
     return np.round(np.clip(intensities, 0, 10), decimals=1)
 
-def transform_intensity(intensities, method='linear', power=2, max_value=100):
+def transform_intensity(intensities, method='linear', power=2, max_value=100, base=10, scaling_factor=2.5):
     if method == 'linear':
         return intensities * (max_value / 10)
     elif method == 'power':
@@ -227,12 +227,17 @@ def transform_intensity(intensities, method='linear', power=2, max_value=100):
                         lower_slope * intensities,
                         (max_value / 2) + upper_slope * (intensities - breakpoint))
     elif method == 'log':
-        return (10**(intensities/2.5) - 1) * (max_value / (10**(10/2.5) - 1))
+        return (base**(intensities/scaling_factor) - 1) * (max_value / (base**(10/scaling_factor) - 1))
     else:
         raise ValueError("Invalid method.")
 
-def calculate_adjusted_pain_units(time_amounts, intensities, transformation_method, power, max_value):
-    transformed_intensities = transform_intensity(intensities, method=transformation_method, power=power, max_value=max_value)
+def calculate_adjusted_pain_units(time_amounts, intensities, transformation_method, power, max_value, base, scaling_factor):
+    transformed_intensities = transform_intensity(intensities,
+                                                  method=transformation_method,
+                                                  power=power,
+                                                  max_value=max_value,
+                                                  base=base,
+                                                  scaling_factor=scaling_factor)
     return np.array([y * t for y, t in zip(time_amounts, transformed_intensities)])
 
 def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std):

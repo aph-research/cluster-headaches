@@ -53,12 +53,24 @@ def create_intensity_scale_inputs(config):
         
         max_value = st.number_input("Select maximum value of the scale:", min_value=1, max_value=1000, value=SimulationConfig.max_value, step=1)
         
-        power = st.slider("Select power:", min_value=1.0, max_value=5.0, value=2.0, step=0.1) if transformation_method in ['power', 'power_scaled'] else 2
+        if transformation_method in ['power', 'power_scaled']:
+            power = st.slider("Select power:", min_value=1.0, max_value=5.0, value=SimulationConfig.power, step=0.1)
+        else:
+            power = SimulationConfig.power
+
+        if transformation_method == 'log':
+            base = st.number_input("Select base:", min_value=1, max_value=20, value=SimulationConfig.base, step=1)
+            scaling_factor = st.number_input("Select scaling factor:", min_value=0.01, max_value=100.0, value=SimulationConfig.scaling_factor, step=0.01)
+        else:
+            base = SimulationConfig.base
+            scaling_factor = SimulationConfig.scaling_factor
 
     config.transformation_method = transformation_method
     config.transformation_display = transformation_display
     config.max_value = max_value
     config.power = power
+    config.base = base
+    config.scaling_factor = scaling_factor
 
     return config
 
@@ -135,10 +147,12 @@ def main():
         simulation.update_transformation_params(config.transformation_method, 
                                                 config.transformation_display,
                                                 config.power,
-                                                config.max_value, 
+                                                config.max_value,
+                                                config.base,
+                                                config.scaling_factor,
                                                 config.migraine_mean, 
                                                 config.migraine_median,
-                                                config. migraine_std)
+                                                config.migraine_std)
         
         fig_adjusted = visualizer.create_adjusted_pain_units_plot()
         st.plotly_chart(fig_adjusted)
