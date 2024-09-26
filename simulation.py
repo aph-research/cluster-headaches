@@ -27,8 +27,8 @@ class Simulation:
         self.generate_population()
         self.simulate_year()
         self.calculate_results()
-        self.calculate_migraine_data()
-        self.calculate_adjusted_pain_units()
+        #self.calculate_migraine_data()
+        #self.calculate_adjusted_pain_units()
 
     def calculate_ch_groups(self):
         annual_prevalence = self.config.annual_prevalence_per_100k / 100000
@@ -114,6 +114,7 @@ class Simulation:
         self.global_average_intensity = global_average_intensity
 
     def calculate_adjusted_pain_units(self):
+        print("Calculating adjusted pain units")
         for group in self.ch_groups.keys():
             self.adjusted_pain_units[group] = calculate_adjusted_pain_units(
                 self.global_person_years[group],
@@ -139,6 +140,7 @@ class Simulation:
         )
 
     def calculate_migraine_data(self):
+        print("Calculating migraine data")
         self.migraine_data = defaultdict(list)
         self.migraine_data['x'], self.migraine_data['y'] = calculate_migraine_distribution(
             self.config.migraine_mean,
@@ -148,6 +150,17 @@ class Simulation:
         adjusted_global_population = 1_040_000_000 / 0.144
         total_migraine_sufferers = adjusted_global_population * self.config.migraine_prevalence_percentage
         self.migraine_data['y'] = self.migraine_data['y'] * total_migraine_sufferers * self.config.migraine_fraction_of_year_in_attacks
+
+    def update_transformation_params(self, transformation_method, transformation_display, power, max_value, migraine_mean, migraine_median, migraine_std):
+        self.config.transformation_method = transformation_method
+        self.config.transformation_display = transformation_display
+        self.config.power = power
+        self.config.max_value = max_value
+        self.config.migraine_mean = migraine_mean
+        self.config.migraine_median = migraine_median
+        self.config.migraine_std = migraine_std
+        self.calculate_migraine_data()
+        self.calculate_adjusted_pain_units()
 
     def get_results(self):
         return {

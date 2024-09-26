@@ -132,38 +132,26 @@ def main():
         fig_comparison = visualizer.create_comparison_plot()
         st.plotly_chart(fig_comparison)
 
-        fig_adjusted = visualizer.create_adjusted_pain_units_plot(
-            transformation_method=config.transformation_method,
-            transformation_display=config.transformation_display,
-            power=config.power,
-            max_value=config.max_value
-        )
+        simulation.update_transformation_params(config.transformation_method, 
+                                                config.transformation_display,
+                                                config.power,
+                                                config.max_value, 
+                                                config.migraine_mean, 
+                                                config.migraine_median,
+                                                config. migraine_std)
+        
+        fig_adjusted = visualizer.create_adjusted_pain_units_plot()
         st.plotly_chart(fig_adjusted)
         
         # Update the table dynamically based on transformation parameters
-        df = visualizer.create_summary_table(
-            transformation_method=config.transformation_method,
-            transformation_display=config.transformation_display,
-            power=config.power,
-            max_value=config.max_value
-        )
+        df = visualizer.create_summary_table()
         visualizer.display_summary_table(df)
 
-        fig_migraine = visualizer.plot_ch_vs_migraine_person_years(
-            config.migraine_mean,
-            config.migraine_median,
-            config.migraine_std
-        )
+        fig_migraine = visualizer.plot_ch_vs_migraine_person_years()
         st.plotly_chart(fig_migraine)
 
-        fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine(
-            transformation_method=config.transformation_method,
-            transformation_display=config.transformation_display,
-            power=config.power,
-            max_value=config.max_value,
-        )
+        fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
         st.plotly_chart(fig_migrain_comparison)
-
 
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')

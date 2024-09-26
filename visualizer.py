@@ -191,12 +191,8 @@ class Visualizer:
 
         return fig
     
-    def create_adjusted_pain_units_plot(self, transformation_method, transformation_display, power, max_value):
+    def create_adjusted_pain_units_plot(self):
         adjusted_data = []
-        self.simulation.config.transformation_method = transformation_method
-        self.simulation.config.power = power
-        self.simulation.config.max_value = max_value
-        self.simulation.calculate_adjusted_pain_units()
         for name in self.results['ch_groups'].keys():
             values = self.simulation.adjusted_pain_units[name]
             std = [0] * len(values)
@@ -205,7 +201,7 @@ class Visualizer:
         fig_adjusted = go.Figure()
         fig_adjusted = self.create_plot(
             adjusted_data,
-            title=f"Intensity-Adjusted Pain Units by Cluster Headache Group ({transformation_display} Transformation)",
+            title=f"Intensity-Adjusted Pain Units by Cluster Headache Group ({self.simulation.config.transformation_display} Transformation)",
             y_title="Intensity-Adjusted Pain Units"
         )
 
@@ -214,15 +210,12 @@ class Visualizer:
 
         return fig_adjusted
 
-    def create_adjusted_pain_units_plot_comparison_migraine(self, transformation_method, transformation_display, power, max_value):
-        self.simulation.config.transformation_method = transformation_method
-        self.simulation.config.power = power
-        self.simulation.config.max_value = max_value
-        self.simulation.calculate_adjusted_pain_units()
+    def create_adjusted_pain_units_plot_comparison_migraine(self):
 
         global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
         
         fig = go.Figure()
+        
         # Plot the global_person_years_ch_all as another line with markers
         fig.add_trace(go.Scatter(
             x=self.intensities,
@@ -253,7 +246,7 @@ class Visualizer:
         ))
 
         fig.update_layout(
-            title=f"Intensity-Adjusted Pain Units: Migraine vs Cluster Headache ({transformation_display} Transformation)",
+            title=f"Intensity-Adjusted Pain Units: Migraine vs Cluster Headache ({self.simulation.config.transformation_display} Transformation)",
             xaxis_title='Pain Intensity',
             yaxis_title='Intensity-Adjusted Pain Units',
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
@@ -278,7 +271,7 @@ class Visualizer:
 
         return fig
             
-    def create_summary_table(self, transformation_method, transformation_display, power, max_value):
+    def create_summary_table(self):
         def format_with_adjusted(value, adjusted):
             return f"{value:,.0f} ({adjusted:,.0f})"
     
@@ -289,11 +282,6 @@ class Visualizer:
             'Global Estimate': {key: 0 for key in ['Person-Years', 'High-Intensity Person-Years', 'Adjusted Units', 'High-Intensity Adjusted Units']}
         }
 
-        self.simulation.config.transformation_method = transformation_method
-        self.simulation.config.transformation_display = transformation_display
-        self.simulation.config.power = power
-        self.simulation.config.max_value = max_value
-
         for group in self.results['ch_groups'].keys():
             avg_data = next(avg for name, avg, _, _, _ in self.results['group_data'] if name == group)
             avg_minutes = sum(avg_data)
@@ -303,7 +291,6 @@ class Visualizer:
 
             self.simulation.global_person_years[group] = self.results['global_person_years'][group]
             self.simulation.intensities = self.results['intensities']
-            self.simulation.calculate_adjusted_pain_units()
             global_adjusted_units = sum(self.simulation.adjusted_pain_units[group])
             avg_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group])
             avg_high_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group][90:])
@@ -520,14 +507,8 @@ class Visualizer:
 
         return fig
     
-    def plot_ch_vs_migraine_person_years(self, migraine_mean, migraine_median, migraine_std):
+    def plot_ch_vs_migraine_person_years(self):
         fig = go.Figure()
-        
-        self.simulation.config.migraine_mean = migraine_mean
-        self.simulation.config.migraine_median = migraine_median
-        self.simulation.config.migraine_std = migraine_std
-
-        self.simulation.calculate_migraine_data()
 
         global_person_years_ch_all = sum(self.global_person_years[group] for group in self.global_person_years.keys())
 
@@ -579,7 +560,7 @@ class Visualizer:
                 bordercolor="white",
                 borderwidth=1
             ),
-            template='plotly_white'
+            template='plotly_dark'
         )
 
         return fig
