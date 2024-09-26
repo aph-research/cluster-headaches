@@ -205,7 +205,7 @@ def generate_max_pain_intensity(is_treated, size):
     
     return np.round(np.clip(intensities, 0, 10), decimals=1)
 
-def transform_intensity(intensities, method='linear', power=2, max_value=100, base=10, scaling_factor=2.5):
+def transform_intensity(intensities, method='linear', power=2, max_value=1, base=10, scaling_factor=1.0, n_taylor = 10):
     if method == 'linear':
         return intensities * (max_value / 10)
     elif method == 'piecewise_linear':
@@ -219,16 +219,21 @@ def transform_intensity(intensities, method='linear', power=2, max_value=100, ba
         return (intensities / 10) ** power * max_value
     elif method == 'exponential':
         return (base**(scaling_factor * intensities) - 1) * (max_value / (base**(scaling_factor * 10) - 1))
+    elif method == 'taylor':
+        y = taylor_expansion_exp(scaling_factor, base, n_taylor, intensities)
+        return (y - 1) / (y.max() - 1) * max_value
+        
     else:
         raise ValueError("Invalid method.")
 
-def calculate_adjusted_pain_units(time_amounts, intensities, transformation_method, power, max_value, base, scaling_factor):
+def calculate_adjusted_pain_units(time_amounts, intensities, transformation_method, power, max_value, base, scaling_factor, n_taylor):
     transformed_intensities = transform_intensity(intensities,
                                                   method=transformation_method,
                                                   power=power,
                                                   max_value=max_value,
                                                   base=base,
-                                                  scaling_factor=scaling_factor)
+                                                  scaling_factor=scaling_factor,
+                                                  n_taylor=n_taylor)
     return np.array([y * t for y, t in zip(time_amounts, transformed_intensities)])
 
 def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std):
@@ -255,3 +260,13 @@ def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std
     normalized_pdf_values = pdf_values / normalization_factor
 
     return np.array(bin_edges), np.array(normalized_pdf_values)
+
+def taylor_expansion_exp(a, b, N, x):
+    x = np.asarray(x)
+    ln_b = np.log(b)
+    result = np.ones_like(x)
+    term = np.ones_like(x)
+    for n in range(1, N):
+        term *= (a * ln_b * x) / n
+        result += term
+    return result
