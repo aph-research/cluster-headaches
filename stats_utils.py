@@ -208,17 +208,6 @@ def generate_max_pain_intensity(is_treated, size):
 def transform_intensity(intensities, method='linear', power=2, max_value=100, base=10, scaling_factor=2.5):
     if method == 'linear':
         return intensities * (max_value / 10)
-    elif method == 'power':
-        return (intensities ** power) * (max_value / (10 ** power))
-    elif method == 'power_scaled':
-        return (intensities / 10)**power * max_value
-    elif method == 'custom_exp':
-        exp_func = lambda x, A, B, C: A * np.exp(B * x) + C
-        x = np.array([0, 7.42, 10])
-        y = np.array([0, max_value/2, max_value])
-        p0 = np.array([max_value/10, 0.5, 0])
-        A, B, C = curve_fit(exp_func, x, y, p0=p0, maxfev=10000)[0]
-        return exp_func(intensities, A, B, C)
     elif method == 'piecewise_linear':
         breakpoint = 8
         lower_slope = (max_value / 2) / breakpoint
@@ -226,7 +215,9 @@ def transform_intensity(intensities, method='linear', power=2, max_value=100, ba
         return np.where(intensities <= breakpoint,
                         lower_slope * intensities,
                         (max_value / 2) + upper_slope * (intensities - breakpoint))
-    elif method == 'log':
+    elif method == 'power':
+        return (intensities / 10) ** power * max_value
+    elif method == 'exponential':
         return (base**(intensities/scaling_factor) - 1) * (max_value / (base**(10/scaling_factor) - 1))
     else:
         raise ValueError("Invalid method.")

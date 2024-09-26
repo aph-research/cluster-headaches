@@ -218,28 +218,29 @@ class Visualizer:
         
         # Plot the global_person_years_ch_all as another line with markers
         fig.add_trace(go.Scatter(
-            x=self.intensities,
-            y=global_person_years_ch_all_adjusted,
+            x=self.intensities[80:],
+            y=global_person_years_ch_all_adjusted[80:],
             mode='lines+markers',
             name='Cluster Headache',
             line=dict(color=self.color_map['Episodic Untreated'], width=2),
             marker=dict(
                     symbol=self.marker_map['Episodic Untreated'],
-                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    size=[8 if x.is_integer() else 0 for x in self.intensities[80:]],
                     color=self.color_map['Episodic Untreated'],
                 ),
-            hoverinfo='x+y+name'
+            hoverinfo='x+y+name',
+            yaxis='y2'  # Assign to secondary y-axis
         ))
         
         fig.add_trace(go.Scatter(
-            x=self.intensities,
-            y=self.simulation.adjusted_pain_units_migraine,
+            x=self.intensities[80:],
+            y=self.simulation.adjusted_pain_units_migraine[80:],
             mode='lines+markers',
             name='Migraine',
             line=dict(color=self.color_map['Migraine'], width=2),
             marker=dict(
                     symbol=self.marker_map['Migraine'],
-                    size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
+                    size=[8 if x.is_integer() else 0 for x in self.intensities[80:]],
                     color=self.color_map['Migraine'],
                 ),
             hoverinfo='x+y+name'
@@ -247,11 +248,27 @@ class Visualizer:
 
         fig.update_layout(
             title=f"Intensity-Adjusted Pain Units: Migraine vs Cluster Headache ({self.simulation.config.transformation_display} Transformation)",
-            xaxis_title='Pain Intensity',
-            yaxis_title='Intensity-Adjusted Pain Units',
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            yaxis=dict(tickformat=',.0f', type='linear'),
+            xaxis=dict(
+                title='Pain Intensity',
+                tickmode='array',
+                tickvals=self.intensities[80:],  # Set tick values to the actual x values
+                #ticktext=[str(int(x)) for x in self.intensities[8:]]  # Set tick labels to the actual x values
+            ),
             legend_title_text='',
+            yaxis=dict(
+                title='Intensity-Adjusted Pain Units: Migraine',
+                titlefont=dict(color=self.color_map['Migraine']),
+                tickfont=dict(color=self.color_map['Migraine']),
+                tickformat=',.0f'
+            ),
+            yaxis2=dict(
+                title='Intensity-Adjusted Pain Units: Cluster Headache',
+                titlefont=dict(color=self.color_map['Episodic Untreated']),
+                tickfont=dict(color=self.color_map['Episodic Untreated']),
+                tickformat=',.0f',
+                overlaying='y',
+                side='right'
+            ),
             legend=dict(
                 itemsizing='constant',
                 itemwidth=30,
@@ -263,7 +280,7 @@ class Visualizer:
                 bordercolor="white",
                 borderwidth=1
             ),
-            template='plotly_white'
+            template='plotly_dark'
         )
 
         #max_adjusted_value = max(max(values) for _, values, _ in adjusted_data)
@@ -502,7 +519,8 @@ class Visualizer:
                 borderwidth=1,  # Border width
                 itemsizing='constant',
                 itemwidth=30  # Adjust this value to change the size of legend markers
-            )
+            ),
+            template='plotly_dark'
         )
 
         return fig
@@ -524,7 +542,8 @@ class Visualizer:
                     size=[8 if x.is_integer() else 0 for x in self.simulation.migraine_data['x']],
                     color=self.color_map['Episodic Untreated'],
                 ),
-            hoverinfo='x+y+name'
+            hoverinfo='x+y+name',
+            yaxis='y2'  # Assign to secondary y-axis
         ))
 
         # Plot the migraine data as a line with markers
@@ -545,9 +564,21 @@ class Visualizer:
         fig.update_layout(
             title="Global Annual Person-Years in Pain: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',
-            yaxis_title='Global Person-Years per Year',
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            yaxis=dict(tickformat=',.0f', type='linear'),
+            yaxis=dict(
+                title='Annual Person-Years: Migraine',
+                titlefont=dict(color=self.color_map['Migraine']),
+                tickfont=dict(color=self.color_map['Migraine']),
+                tickformat=',.0f'
+            ),
+            yaxis2=dict(
+                title='Annual Person-Years: Cluster Headache',
+                titlefont=dict(color=self.color_map['Episodic Untreated']),
+                tickfont=dict(color=self.color_map['Episodic Untreated']),
+                tickformat=',.0f',
+                overlaying='y',
+                side='right'
+            ),
             legend_title_text='',
             legend=dict(
                 itemsizing='constant',

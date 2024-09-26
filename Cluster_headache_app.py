@@ -41,26 +41,24 @@ def create_intensity_scale_inputs(config):
             'Linear': 'linear',
             'Piecewise Linear': 'piecewise_linear',
             'Power': 'power',
-            'Power (scaled)': 'power_scaled',
-            'Fitted Exponential': 'custom_exp',
-            'Logarithmic': 'log'
+            'Exponential': 'exponential'
         }
         transformation_display = st.selectbox(
-            "Select transformation method:",
+            "Transformation method",
             list(method_map.keys())
         )
         transformation_method = method_map[transformation_display]
         
-        max_value = st.number_input("Select maximum value of the scale:", min_value=1, max_value=1000, value=SimulationConfig.max_value, step=1)
+        max_value = st.number_input("Maximum value of the scale", min_value=1, max_value=1000, value=SimulationConfig.max_value, step=1)
         
-        if transformation_method in ['power', 'power_scaled']:
-            power = st.slider("Select power:", min_value=1.0, max_value=5.0, value=SimulationConfig.power, step=0.1)
+        if transformation_method == 'power':
+            power = st.number_input("Power", min_value=1.0, max_value=10.0, value=SimulationConfig.power, step=0.1)
         else:
             power = SimulationConfig.power
 
-        if transformation_method == 'log':
-            base = st.number_input("Select base:", min_value=1, max_value=20, value=SimulationConfig.base, step=1)
-            scaling_factor = st.number_input("Select scaling factor:", min_value=0.01, max_value=100.0, value=SimulationConfig.scaling_factor, step=0.01)
+        if transformation_method == 'exponential':
+            base = st.number_input("Base", min_value=1, max_value=20, value=SimulationConfig.base, step=1)
+            scaling_factor = st.number_input("Scaling factor", min_value=0.01, max_value=100.0, value=SimulationConfig.scaling_factor, step=0.01)
         else:
             base = SimulationConfig.base
             scaling_factor = SimulationConfig.scaling_factor
