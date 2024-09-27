@@ -42,7 +42,6 @@ def create_intensity_scale_inputs(config):
             'Piecewise Linear': 'piecewise_linear',
             'Power': 'power',
             'Exponential': 'exponential',
-            'Taylor': 'taylor'
         }
         transformation_display = st.selectbox(
             "Transformation method",
@@ -55,24 +54,18 @@ def create_intensity_scale_inputs(config):
         else:
             power = SimulationConfig.power
 
-        if transformation_method in ['exponential', 'taylor']:
+        if transformation_method == 'exponential':
             base = st.number_input("Base", min_value=1.0, max_value=20.0, value=SimulationConfig.base, step=1.0)
             scaling_factor = st.number_input("Scaling factor", min_value=0.01, max_value=100.0, value=SimulationConfig.scaling_factor, step=0.01)
         else:
             base = SimulationConfig.base
             scaling_factor = SimulationConfig.scaling_factor
 
-        if transformation_method == 'taylor':
-            n_taylor = st.number_input("Number of terms", min_value=2, max_value=100, value=SimulationConfig.n_taylor, step=1)
-        else:
-            n_taylor = SimulationConfig.n_taylor
-
     config.transformation_method = transformation_method
     config.transformation_display = transformation_display
     config.power = power
     config.base = base
     config.scaling_factor = scaling_factor
-    config.n_taylor = n_taylor
 
     return config
 
@@ -151,7 +144,6 @@ def main():
                                                 config.power,
                                                 config.base,
                                                 config.scaling_factor,
-                                                config.n_taylor,
                                                 config.migraine_mean, 
                                                 config.migraine_median,
                                                 config.migraine_std)
