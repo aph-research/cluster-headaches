@@ -10,6 +10,24 @@ def set_random_seeds(seed=42):
     import random
     random.seed(seed)
 
+def create_camera_inputs():
+    with st.sidebar.expander("3D Plot Camera Properties"):
+        camera_eye_x = st.slider("Camera Eye X", min_value=-3.0, max_value=3.0, value=-1.5, step=0.01)
+        camera_eye_y = st.slider("Camera Eye Y", min_value=-3.0, max_value=3.0, value=2.25, step=0.01)
+        camera_eye_z = st.slider("Camera Eye Z", min_value=-3.0, max_value=3.0, value=0.5, step=0.01)
+        camera_center_x = st.slider("Camera Center X", min_value=-2.0, max_value=2.0, value=0.25, step=0.01)
+        camera_center_y = st.slider("Camera Center Y", min_value=-2.0, max_value=2.0, value=0.0, step=0.01)
+        camera_center_z = st.slider("Camera Center Z", min_value=-2.0, max_value=2.0, value=-0.5, step=0.01)
+        camera_up_x = st.slider("Camera Up X", min_value=-2.0, max_value=2.0, value=0.0, step=0.01)
+        camera_up_y = st.slider("Camera Up Y", min_value=-2.0, max_value=2.0, value=0.0, step=0.01)
+        camera_up_z = st.slider("Camera Up Z", min_value=-2.0, max_value=2.0, value=1.0, step=0.01)
+
+    return {
+        "eye": {"x": camera_eye_x, "y": camera_eye_y, "z": camera_eye_z},
+        "center": {"x": camera_center_x, "y": camera_center_y, "z": camera_center_z},
+        "up": {"x": camera_up_x, "y": camera_up_y, "z": camera_up_z}
+    }
+
 # Sidebar inputs for simulation parameters
 def create_sidebar_inputs():
     st.sidebar.header("Parameters")
@@ -129,6 +147,7 @@ def main():
     # If simulation has been run, process and display results
     if 'simulation_run' in st.session_state and st.session_state.simulation_run:
         visualizer = Visualizer(simulation)
+        camera_props = create_camera_inputs()
     
         # Visualization sections
         fig_avg = visualizer.create_average_minutes_plot()
@@ -173,7 +192,8 @@ def main():
         fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
         st.plotly_chart(fig_migrain_comparison)
 
-        fig_migrain_comparison_3d = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
+        
+        fig_migrain_comparison_3d = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d(camera_props)
         st.plotly_chart(fig_migrain_comparison_3d)
 
     else:

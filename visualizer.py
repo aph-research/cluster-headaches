@@ -277,7 +277,7 @@ class Visualizer:
 
         return fig
     
-    def create_adjusted_pain_units_plot_comparison_migraine_3d(self):
+    def create_adjusted_pain_units_plot_comparison_migraine_3d(self, camera_props):
         pain_threshold = 8.0
         idx = int(pain_threshold * 10)
         
@@ -311,20 +311,17 @@ class Visualizer:
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)
         z_data_cluster = np.array(z_data_cluster)
-
+    
         # Create the 3D surface plot for migraine
         fig.add_trace(go.Surface(
             x=intensities,
             y=list(n_taylor_values),
             z=z_data_migraine,
-            colorscale='Tealgrn',
+            colorscale='Blues',
             name='Migraine',
-            opacity=0.7,
-            colorbar=dict(
-                title='Migraine',
-                titleside='top',
-                x=-0.1  # Position the colorbar to the right
-            )
+            opacity=0.9,
+            showscale=False,
+            hovertemplate='Intensity: %{x}<br>Adj. Person-Years: %{z:,.0f}'
         ))
         
         # Create the 3D surface plot for cluster headache
@@ -334,26 +331,34 @@ class Visualizer:
             z=z_data_cluster,
             colorscale='Sunsetdark',
             name='CH',
-            opacity=0.7,
-            colorbar=dict(
-                title='Cluster Headache',
-                titleside='top',
-                x=1.1  # Position the colorbar further to the right
-            )            
+            opacity=0.9,
+            showscale=False,
+            hovertemplate='Intensity: %{x}<br>Adj. Person-Years: %{z:,.0f}'
         ))
 
         fig.update_layout(
-            title="3D Plot of Adjusted Pain Units vs Pain Intensity and n_taylor",
+            title="Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache",
             scene=dict(
-                xaxis_title='Pain Intensity',
-                yaxis_title='More linear → More exponential',
-                zaxis_title='Adjusted Pain Units',
-                camera=dict(
-                    eye=dict(x=3, y=1.25, z=1.25)  # Increase the x value to pan the plot to the right
-                )
+                xaxis=dict(
+                    title='Pain Intensity',
+                    autorange='reversed'
+                ),
+                yaxis=dict(
+                    title='',
+                    tickvals=[n_taylor_values[0], n_taylor_values[-1]],  # Show ticks at the first and last y values
+                    ticktext=['More linear', 'More exponential'],
+                    #showticklabels=False
+                ),
+                zaxis=dict(
+                    title='Adjusted Person-Years',
+                    tickformat=',.0f'
+                ),
+                aspectratio=dict(x=2, y=2, z=1)
             ),
+            scene_camera=camera_props,
             template='plotly_dark',
-            height=800
+            height=500,
+            margin=dict(l=0, r=0, t=30, b=30)
         )
 
         return fig
