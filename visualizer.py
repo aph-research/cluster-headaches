@@ -278,7 +278,7 @@ class Visualizer:
 
         return fig
     
-    def create_adjusted_pain_units_plot_comparison_migraine_3d(self, camera_props):
+    def create_adjusted_pain_units_plot_comparison_migraine_3d(self):
         pain_threshold = 8.0
         idx = int(pain_threshold * 10)
         
@@ -356,7 +356,11 @@ class Visualizer:
                 ),
                 aspectratio=dict(x=2, y=2, z=1)
             ),
-            scene_camera=camera_props,
+            scene_camera={
+                "eye": {"x": -1.5, "y": 2.25, "z": 0.5},
+                "center": {"x": 0.25, "y": 0.0, "z": -0.5},
+                "up": {"x": 0.0, "y": 0.0, "z": 1.0}
+            },
             template='plotly_dark',
             height=500,
             margin=dict(l=0, r=0, t=30, b=30)
