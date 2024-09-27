@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 import plotly.express as px
+import plotly.colors
 import pandas as pd
 import numpy as np
 import streamlit as st
@@ -317,7 +318,7 @@ class Visualizer:
             x=intensities,
             y=list(n_taylor_values),
             z=z_data_migraine,
-            colorscale='Blues',
+            colorscale='Blues_r',
             name='Migraine',
             opacity=0.9,
             showscale=False,
