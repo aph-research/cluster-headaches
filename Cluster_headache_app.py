@@ -173,6 +173,9 @@ def main():
         fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
         st.plotly_chart(fig_migrain_comparison)
 
+        fig_migrain_comparison_3d = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
+        st.plotly_chart(fig_migrain_comparison_3d)
+
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
 

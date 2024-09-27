@@ -211,6 +211,8 @@ class Visualizer:
         return fig_adjusted
 
     def create_adjusted_pain_units_plot_comparison_migraine(self):
+        pain_threshold = 8.0
+        idx = int(pain_threshold * 10)
 
         global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
         
@@ -218,8 +220,8 @@ class Visualizer:
         
         # Plot the global_person_years_ch_all as another line with markers
         fig.add_trace(go.Scatter(
-            x=self.intensities[80:],
-            y=global_person_years_ch_all_adjusted[80:],
+            x=self.intensities[idx:],
+            y=global_person_years_ch_all_adjusted[idx:],
             mode='lines+markers',
             name='Cluster Headache',
             line=dict(color=self.color_map['Episodic Untreated'], width=2),
@@ -228,13 +230,12 @@ class Visualizer:
                     size = 8,
                     color=self.color_map['Episodic Untreated'],
                 ),
-            hoverinfo='x+y+name',
-            #yaxis='y2'  # Assign to secondary y-axis
+            hoverinfo='x+y+name'
         ))
         
         fig.add_trace(go.Scatter(
-            x=self.intensities[80:],
-            y=self.simulation.adjusted_pain_units_migraine[80:],
+            x=self.intensities[idx:],
+            y=self.simulation.adjusted_pain_units_migraine[idx:],
             mode='lines+markers',
             name='Migraine',
             line=dict(color=self.color_map['Migraine'], width=2),
@@ -251,14 +252,11 @@ class Visualizer:
             xaxis=dict(
                 title='Pain Intensity',
                 tickmode='array',
-                tickvals=self.intensities[80:],  # Set tick values to the actual x values
-                #ticktext=[str(int(x)) for x in self.intensities[8:]]  # Set tick labels to the actual x values
+                tickvals=self.intensities[idx:],  # Set tick values to the actual x values
             ),
             legend_title_text='',
             yaxis=dict(
-                title='Annual Intensity-Adjusted Person-Years of Pain',
-                #titlefont=dict(color=self.color_map['Migraine']),
-                #tickfont=dict(color=self.color_map['Migraine']),
+                title='Intensity-Adjusted Person-Years',
                 tickformat=',.0f'
             ),
 
@@ -273,11 +271,93 @@ class Visualizer:
                 bordercolor="white",
                 borderwidth=1
             ),
+            height=450,
             template='plotly_dark'
         )
 
         return fig
+    
+    def create_adjusted_pain_units_plot_comparison_migraine_3d(self):
+        pain_threshold = 8.0
+        idx = int(pain_threshold * 10)
+        
+        fig = go.Figure()
+
+        # Define the range for n_taylor
+        n_taylor_values = range(1, 41)
+
+        # Prepare data for 3D plot
+        intensities = self.intensities[idx:]
+        z_data_migraine = []
+        z_data_cluster = []
+
+        self.simulation.config.transformation_method = 'taylor'
+        self.simulation.config.transformation_display = 'Taylor'
+
+        for n_taylor in n_taylor_values:
+            # Update the simulation with the current n_taylor value
+            self.simulation.config.n_taylor = n_taylor
+            self.simulation.calculate_adjusted_pain_units()
+
+            # Get the adjusted pain units for the current n_taylor value
+            adjusted_pain_units_migraine = self.simulation.adjusted_pain_units_migraine[idx:]
+            z_data_migraine.append(adjusted_pain_units_migraine)
             
+            # Calculate the global adjusted pain units for cluster headaches
+            global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
+            adjusted_pain_units_cluster = global_person_years_ch_all_adjusted[idx:]
+            z_data_cluster.append(adjusted_pain_units_cluster)
+       
+        # Convert z_data to a 2D arrays
+        z_data_migraine = np.array(z_data_migraine)
+        z_data_cluster = np.array(z_data_cluster)
+
+        # Create the 3D surface plot for migraine
+        fig.add_trace(go.Surface(
+            x=intensities,
+            y=list(n_taylor_values),
+            z=z_data_migraine,
+            colorscale='Tealgrn',
+            name='Migraine',
+            opacity=0.7,
+            colorbar=dict(
+                title='Migraine',
+                titleside='top',
+                x=-0.1  # Position the colorbar to the right
+            )
+        ))
+        
+        # Create the 3D surface plot for cluster headache
+        fig.add_trace(go.Surface(
+            x=intensities,
+            y=list(n_taylor_values),
+            z=z_data_cluster,
+            colorscale='Sunsetdark',
+            name='CH',
+            opacity=0.7,
+            colorbar=dict(
+                title='Cluster Headache',
+                titleside='top',
+                x=1.1  # Position the colorbar further to the right
+            )            
+        ))
+
+        fig.update_layout(
+            title="3D Plot of Adjusted Pain Units vs Pain Intensity and n_taylor",
+            scene=dict(
+                xaxis_title='Pain Intensity',
+                yaxis_title='More linear → More exponential',
+                zaxis_title='Adjusted Pain Units',
+                camera=dict(
+                    eye=dict(x=3, y=1.25, z=1.25)  # Increase the x value to pan the plot to the right
+                )
+            ),
+            template='plotly_dark',
+            height=800
+        )
+
+        return fig
+                
     def create_summary_table(self):
         def format_with_adjusted(value, adjusted):
             return f"{value:,.0f} ({adjusted:,.0f})"
