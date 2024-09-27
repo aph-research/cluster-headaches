@@ -68,8 +68,6 @@ def create_intensity_scale_inputs(config):
         )
         transformation_method = method_map[transformation_display]
         
-        max_value = st.number_input("Maximum value of the scale", min_value=1, max_value=1000, value=SimulationConfig.max_value, step=1)
-        
         if transformation_method == 'power':
             power = st.number_input("Power", min_value=1.0, max_value=10.0, value=SimulationConfig.power, step=0.1)
         else:
@@ -89,7 +87,6 @@ def create_intensity_scale_inputs(config):
 
     config.transformation_method = transformation_method
     config.transformation_display = transformation_display
-    config.max_value = max_value
     config.power = power
     config.base = base
     config.scaling_factor = scaling_factor
@@ -171,7 +168,6 @@ def main():
         simulation.update_transformation_params(config.transformation_method, 
                                                 config.transformation_display,
                                                 config.power,
-                                                config.max_value,
                                                 config.base,
                                                 config.scaling_factor,
                                                 config.n_taylor,
