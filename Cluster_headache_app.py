@@ -50,7 +50,7 @@ def create_intensity_scale_inputs(config):
         transformation_method = method_map[transformation_display]
         
         if transformation_method == 'power':
-            power = st.number_input("Power", min_value=1.0, max_value=10.0, value=SimulationConfig.power, step=0.1)
+            power = st.number_input("Power", min_value=1.0, max_value=100.0, value=SimulationConfig.power, step=0.1)
         else:
             power = SimulationConfig.power
 

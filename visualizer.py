@@ -285,7 +285,8 @@ class Visualizer:
         fig = go.Figure()
 
         # Define the range for n_taylor
-        n_taylor_values = range(1, 41)
+        n_taylor_values = range(2, 41)
+        n_taylor_crossing = 0
 
         # Prepare data for 3D plot
         intensities = self.intensities[idx:]
@@ -303,11 +304,19 @@ class Visualizer:
             # Get the adjusted pain units for the current n_taylor value
             adjusted_pain_units_migraine = self.simulation.adjusted_pain_units_migraine[idx:]
             z_data_migraine.append(adjusted_pain_units_migraine)
+            total_migraine_burden = sum(adjusted_pain_units_migraine)
+            print(f"n_taylor: {n_taylor}")
+            print(f"z_data_migraine: {adjusted_pain_units_migraine}")
             
             # Calculate the global adjusted pain units for cluster headaches
             global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
             adjusted_pain_units_cluster = global_person_years_ch_all_adjusted[idx:]
             z_data_cluster.append(adjusted_pain_units_cluster)
+            total_cluster_burden = sum(adjusted_pain_units_cluster)
+            print(f"z_data_cluster: {adjusted_pain_units_cluster}")
+
+            if total_cluster_burden > total_migraine_burden and n_taylor_crossing == 0:
+                n_taylor_crossing = n_taylor
        
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)
@@ -336,6 +345,25 @@ class Visualizer:
             showscale=False,
             hovertemplate='Intensity: %{x}<br>Adj. Person-Years: %{z:,.0f}'
         ))
+
+        # Add the plane at n_taylor_crossing-2 if it is not zero
+        # (subtracting 2 since n_taylor starts at 2, which corresponds to y = 0)
+        print(f"n_taylor_crossing: {n_taylor_crossing}")
+        if n_taylor_crossing != 0:
+            plane_y = np.full((len(intensities), len(z_data_cluster[0])), n_taylor_crossing-2)
+            max_z_value = np.max([np.max(z_data_cluster), np.max(z_data_migraine)])
+            plane_z = np.linspace(0, max_z_value, len(z_data_cluster[0]))
+            plane_z = np.tile(plane_z, (len(intensities), 1))
+
+            fig.add_trace(go.Surface(
+                x=np.tile(intensities, (len(z_data_cluster[0]), 1)).T,
+                y=plane_y,
+                z=plane_z,
+                colorscale=[[0, 'rgba(255, 0, 0, 0.5)'], [1, 'rgba(255, 0, 0, 0.5)']],
+                name='Crossing Plane',
+                showscale=False,
+                hovertemplate='Point where CH burden > migraine burden<extra></extra>'
+            ))
 
         fig.update_layout(
             title="Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache",
