@@ -363,6 +363,9 @@ class Visualizer:
                 showscale=False,
                 hovertemplate='Point where CH burden > migraine burden<extra></extra>'
             ))
+            df = self.adjusted_intensities_table(intensities_adjusted)
+            print(df)
+
 
         fig.update_layout(
             title="Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache",
@@ -565,6 +568,32 @@ class Visualizer:
         st.markdown(css, unsafe_allow_html=True)
         st.write(table_html, unsafe_allow_html=True)
 
+    def adjusted_intensities_table(self, adjusted_intensities):
+        # Ensure adjusted_intensities is a numpy array
+        adjusted_intensities = np.array(adjusted_intensities)
+        
+        # Create the data for the table
+        data = []
+        for i in range(0, 20):
+            row = []
+            for j in range(0, 5):
+                index = j * 20 + i + 1
+                row.append(self.intensities[index])
+                row.append(adjusted_intensities[index])
+            print(row)
+            data.append(row)
+        
+        # Create the DataFrame
+        df = pd.DataFrame(data, columns=[
+            'Intensity', 'Adjusted Intensity',
+            'Intensity', 'Adjusted Intensity',
+            'Intensity', 'Adjusted Intensity',
+            'Intensity', 'Adjusted Intensity',
+            'Intensity', 'Adjusted Intensity'
+        ])
+        
+        return df
+    
     def update_results(self, new_results):
         self.results = new_results
 
