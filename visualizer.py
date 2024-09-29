@@ -1,6 +1,5 @@
 import plotly.graph_objects as go
 import plotly.express as px
-import plotly.colors
 import pandas as pd
 import numpy as np
 import streamlit as st
@@ -290,6 +289,8 @@ class Visualizer:
         n_taylor_values = range(2, 41)
         n_taylor_crossing = 0
 
+        intensities_transformed = None
+
         # Prepare data for 3D plot
         intensities = self.intensities[idx:]
         z_data_migraine = []
@@ -316,8 +317,8 @@ class Visualizer:
 
             if total_cluster_burden > total_migraine_burden and n_taylor_crossing == 0:
                 n_taylor_crossing = n_taylor
-                intensities_transformed = self.intensities_transformed
-       
+                intensities_transformed = self.simulation.intensities_transformed
+
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)
         z_data_cluster = np.array(z_data_cluster)
@@ -348,7 +349,6 @@ class Visualizer:
 
         # Add the plane at n_taylor_crossing-2 if it is not zero
         # (subtracting 2 since n_taylor starts at 2, which corresponds to y = 0)
-        print(f"n_taylor_crossing: {n_taylor_crossing}")
         if n_taylor_crossing != 0:
             plane_y = np.full((len(intensities), len(z_data_cluster[0])), n_taylor_crossing-2)
             max_z_value = np.max([np.max(z_data_cluster), np.max(z_data_migraine)])
@@ -369,19 +369,35 @@ class Visualizer:
                 x=self.intensities,
                 y=intensities_transformed,
                 mode='lines+markers',
+                marker=dict(
+                    size=[8 if x.is_integer() else 0 for x in self.intensities],
+                ),
                 name='Adjusted Intensities'
             ))
 
             # Update layout
             fig_intensities.update_layout(
-                title='Adjusted Intensities Plot',
+                title='Intensity Transformation for which ≥8/10 CH Burden > Migraine Burden',
                 xaxis_title='Intensity',
                 yaxis_title='Adjusted Intensity',
-                template='plotly_dark'
+                template='plotly_dark',
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[i for i in range(11)],
+                    ticktext=[str(i) for i in range(11)]
+                ),
+                yaxis=dict(
+                    tickmode='array',
+                    tickvals=[i/10 for i in range(11)],
+                    ticktext=[f'{i/10:.1f}' for i in range(11)]
+                ),
+                # Make the plot square
+                height=550,
+                width=550,
             )
 
         fig.update_layout(
-            title="Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache",
+            title="Annual Intensity-Adjusted Person-Years of ≥8/10 Pain: Migraine vs Cluster Headache",
             scene=dict(
                 xaxis=dict(
                     title='Pain Intensity',

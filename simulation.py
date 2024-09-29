@@ -135,7 +135,7 @@ class Simulation:
                 self.config.scaling_factor,
                 self.config.n_taylor
             )
-        self.adjusted_pain_units_migraine, _ = calculate_adjusted_pain_units(
+        self.adjusted_pain_units_migraine, self.intensities_transformed = calculate_adjusted_pain_units(
             self.migraine_data['y'],
             self.intensities,
             self.config.transformation_method,
@@ -157,7 +157,7 @@ class Simulation:
         total_migraine_sufferers = adjusted_global_population * self.config.migraine_prevalence_percentage
         self.migraine_data['y'] = self.migraine_data['y'] * total_migraine_sufferers * self.config.migraine_fraction_of_year_in_attacks
 
-    def update_transformation_params(self, transformation_method, transformation_display, power, base, scaling_factor, migraine_mean, migraine_median, migraine_std, intensities_transformed):
+    def update_transformation_params(self, transformation_method, transformation_display, power, base, scaling_factor, migraine_mean, migraine_median, migraine_std):
         self.config.transformation_method = transformation_method
         self.config.transformation_display = transformation_display
         self.config.power = power
@@ -166,7 +166,6 @@ class Simulation:
         self.config.migraine_mean = migraine_mean
         self.config.migraine_median = migraine_median
         self.config.migraine_std = migraine_std
-        self.intensities_transformed = intensities_transformed
         self.calculate_migraine_data()
         self.calculate_adjusted_pain_units()
 

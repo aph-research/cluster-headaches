@@ -146,8 +146,7 @@ def main():
                                                 config.scaling_factor,
                                                 config.migraine_mean, 
                                                 config.migraine_median,
-                                                config.migraine_std,
-                                                simulation.intensities_transformed)
+                                                config.migraine_std)
         
         fig_adjusted = visualizer.create_adjusted_pain_units_plot()
         st.plotly_chart(fig_adjusted)
@@ -161,7 +160,6 @@ def main():
 
         fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
         st.plotly_chart(fig_migrain_comparison)
-
         
         fig_migrain_comparison_3d, fig_intensities = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
         st.plotly_chart(fig_migrain_comparison_3d)
