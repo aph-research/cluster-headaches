@@ -10,6 +10,7 @@ class Visualizer:
         self.simulation = simulation
         self.results = simulation.get_results()
         self.intensities = self.results['intensities']
+        self.intensities_adjusted = self.results['intensities_adjusted']
         self.group_data = self.results['group_data']
         self.global_person_years = self.results['global_person_years']
         self.global_std_person_years = self.results['global_std_person_years']
@@ -305,18 +306,16 @@ class Visualizer:
             adjusted_pain_units_migraine = self.simulation.adjusted_pain_units_migraine[idx:]
             z_data_migraine.append(adjusted_pain_units_migraine)
             total_migraine_burden = sum(adjusted_pain_units_migraine)
-            print(f"n_taylor: {n_taylor}")
-            print(f"z_data_migraine: {adjusted_pain_units_migraine}")
             
             # Calculate the global adjusted pain units for cluster headaches
             global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
             adjusted_pain_units_cluster = global_person_years_ch_all_adjusted[idx:]
             z_data_cluster.append(adjusted_pain_units_cluster)
             total_cluster_burden = sum(adjusted_pain_units_cluster)
-            print(f"z_data_cluster: {adjusted_pain_units_cluster}")
 
             if total_cluster_burden > total_migraine_burden and n_taylor_crossing == 0:
                 n_taylor_crossing = n_taylor
+                intensities_adjusted = self.intensities_adjusted
        
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)

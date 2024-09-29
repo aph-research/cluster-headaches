@@ -234,7 +234,7 @@ def calculate_adjusted_pain_units(time_amounts, intensities, transformation_meth
                                                   base=base,
                                                   scaling_factor=scaling_factor,
                                                   n_taylor=n_taylor)
-    return np.array([y * t for y, t in zip(time_amounts, transformed_intensities)])
+    return np.array([y * t for y, t in zip(time_amounts, transformed_intensities)]), transformed_intensities
 
 def calculate_migraine_distribution(migraine_mean, migraine_median, migraine_std):
     # Estimate skewness parameter

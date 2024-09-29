@@ -9,6 +9,7 @@ class Simulation:
         self.population = []
         self.results = None
         self.intensities = np.arange(0, 10.1, 0.1)
+        self.intensities_adjusted = np.array([])
         self.ch_groups = None
         self.global_person_years = {}
         self.global_std_person_years = {}
@@ -27,8 +28,6 @@ class Simulation:
         self.generate_population()
         self.simulate_year()
         self.calculate_results()
-        #self.calculate_migraine_data()
-        #self.calculate_adjusted_pain_units()
 
     def calculate_ch_groups(self):
         annual_prevalence = self.config.annual_prevalence_per_100k / 100000
@@ -115,7 +114,7 @@ class Simulation:
 
     def calculate_adjusted_pain_units(self):
         for group in self.ch_groups.keys():
-            self.adjusted_pain_units[group] = calculate_adjusted_pain_units(
+            self.adjusted_pain_units[group], self.intensities_adjusted = calculate_adjusted_pain_units(
                 self.global_person_years[group],
                 self.intensities,
                 self.config.transformation_method,
@@ -126,7 +125,7 @@ class Simulation:
                 self.config.n_taylor
             )
             avg_data = next(avg for name, avg, _, _, _ in self.group_data if name == group)
-            self.adjusted_avg_pain_units[group] = calculate_adjusted_pain_units(
+            self.adjusted_avg_pain_units[group], self.intensities_adjusted = calculate_adjusted_pain_units(
                 avg_data,
                 self.intensities,
                 self.config.transformation_method,
@@ -136,7 +135,7 @@ class Simulation:
                 self.config.scaling_factor,
                 self.config.n_taylor
             )
-        self.adjusted_pain_units_migraine = calculate_adjusted_pain_units(
+        self.adjusted_pain_units_migraine, self.intensities_adjusted = calculate_adjusted_pain_units(
             self.migraine_data['y'],
             self.intensities,
             self.config.transformation_method,
@@ -174,6 +173,7 @@ class Simulation:
         return {
             'config': self.config,
             'intensities': self.intensities,
+            'intensities_adjusted': self.intensities_adjusted,
             'group_data': self.group_data,
             'global_person_years': self.global_person_years,
             'global_std_person_years': self.global_std_person_years,
