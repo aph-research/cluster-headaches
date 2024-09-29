@@ -10,7 +10,7 @@ class Visualizer:
         self.simulation = simulation
         self.results = simulation.get_results()
         self.intensities = self.results['intensities']
-        self.intensities_adjusted = self.results['intensities_adjusted']
+        self.intensities_transformed = self.results['intensities_transformed']
         self.group_data = self.results['group_data']
         self.global_person_years = self.results['global_person_years']
         self.global_std_person_years = self.results['global_std_person_years']
@@ -284,6 +284,7 @@ class Visualizer:
         idx = int(pain_threshold * 10)
         
         fig = go.Figure()
+        fig_intensities = go.Figure()
 
         # Define the range for n_taylor
         n_taylor_values = range(2, 41)
@@ -315,7 +316,7 @@ class Visualizer:
 
             if total_cluster_burden > total_migraine_burden and n_taylor_crossing == 0:
                 n_taylor_crossing = n_taylor
-                intensities_adjusted = self.intensities_adjusted
+                intensities_transformed = self.intensities_transformed
        
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)
@@ -324,7 +325,7 @@ class Visualizer:
         # Create the 3D surface plot for migraine
         fig.add_trace(go.Surface(
             x=intensities,
-            y=list(n_taylor_values),
+            y=np.array(n_taylor_values)-2,
             z=z_data_migraine,
             colorscale='Blues_r',
             name='Migraine',
@@ -336,7 +337,7 @@ class Visualizer:
         # Create the 3D surface plot for cluster headache
         fig.add_trace(go.Surface(
             x=intensities,
-            y=list(n_taylor_values),
+            y=np.array(n_taylor_values)-2,
             z=z_data_cluster,
             colorscale='Sunsetdark',
             name='CH',
@@ -363,9 +364,21 @@ class Visualizer:
                 showscale=False,
                 hovertemplate='Point where CH burden > migraine burden<extra></extra>'
             ))
-            df = self.adjusted_intensities_table(intensities_adjusted)
-            print(df)
+            
+            fig_intensities.add_trace(go.Scatter(
+                x=self.intensities,
+                y=intensities_transformed,
+                mode='lines+markers',
+                name='Adjusted Intensities'
+            ))
 
+            # Update layout
+            fig_intensities.update_layout(
+                title='Adjusted Intensities Plot',
+                xaxis_title='Intensity',
+                yaxis_title='Adjusted Intensity',
+                template='plotly_dark'
+            )
 
         fig.update_layout(
             title="Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache",
@@ -376,7 +389,7 @@ class Visualizer:
                 ),
                 yaxis=dict(
                     title='',
-                    tickvals=[n_taylor_values[0], n_taylor_values[-1]],  # Show ticks at the first and last y values
+                    tickvals=[n_taylor_values[0]-2, n_taylor_values[-1]-2],  # Show ticks at the first and last y values
                     ticktext=['More linear', 'More exponential'],
                     #showticklabels=False
                 ),
@@ -396,7 +409,7 @@ class Visualizer:
             margin=dict(l=0, r=0, t=30, b=30)
         )
 
-        return fig
+        return fig, fig_intensities
                 
     def create_summary_table(self):
         def format_with_adjusted(value, adjusted):
@@ -567,32 +580,6 @@ class Visualizer:
         """
         st.markdown(css, unsafe_allow_html=True)
         st.write(table_html, unsafe_allow_html=True)
-
-    def adjusted_intensities_table(self, adjusted_intensities):
-        # Ensure adjusted_intensities is a numpy array
-        adjusted_intensities = np.array(adjusted_intensities)
-        
-        # Create the data for the table
-        data = []
-        for i in range(0, 20):
-            row = []
-            for j in range(0, 5):
-                index = j * 20 + i + 1
-                row.append(self.intensities[index])
-                row.append(adjusted_intensities[index])
-            print(row)
-            data.append(row)
-        
-        # Create the DataFrame
-        df = pd.DataFrame(data, columns=[
-            'Intensity', 'Adjusted Intensity',
-            'Intensity', 'Adjusted Intensity',
-            'Intensity', 'Adjusted Intensity',
-            'Intensity', 'Adjusted Intensity',
-            'Intensity', 'Adjusted Intensity'
-        ])
-        
-        return df
     
     def update_results(self, new_results):
         self.results = new_results

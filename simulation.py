@@ -9,7 +9,7 @@ class Simulation:
         self.population = []
         self.results = None
         self.intensities = np.arange(0, 10.1, 0.1)
-        self.intensities_adjusted = np.array([])
+        self.intensities_transformed = np.array([])
         self.ch_groups = None
         self.global_person_years = {}
         self.global_std_person_years = {}
@@ -114,7 +114,7 @@ class Simulation:
 
     def calculate_adjusted_pain_units(self):
         for group in self.ch_groups.keys():
-            self.adjusted_pain_units[group], self.intensities_adjusted = calculate_adjusted_pain_units(
+            self.adjusted_pain_units[group], self.intensities_transformed = calculate_adjusted_pain_units(
                 self.global_person_years[group],
                 self.intensities,
                 self.config.transformation_method,
@@ -125,7 +125,7 @@ class Simulation:
                 self.config.n_taylor
             )
             avg_data = next(avg for name, avg, _, _, _ in self.group_data if name == group)
-            self.adjusted_avg_pain_units[group], self.intensities_adjusted = calculate_adjusted_pain_units(
+            self.adjusted_avg_pain_units[group], _ = calculate_adjusted_pain_units(
                 avg_data,
                 self.intensities,
                 self.config.transformation_method,
@@ -135,7 +135,7 @@ class Simulation:
                 self.config.scaling_factor,
                 self.config.n_taylor
             )
-        self.adjusted_pain_units_migraine, self.intensities_adjusted = calculate_adjusted_pain_units(
+        self.adjusted_pain_units_migraine, _ = calculate_adjusted_pain_units(
             self.migraine_data['y'],
             self.intensities,
             self.config.transformation_method,
@@ -157,7 +157,7 @@ class Simulation:
         total_migraine_sufferers = adjusted_global_population * self.config.migraine_prevalence_percentage
         self.migraine_data['y'] = self.migraine_data['y'] * total_migraine_sufferers * self.config.migraine_fraction_of_year_in_attacks
 
-    def update_transformation_params(self, transformation_method, transformation_display, power, base, scaling_factor, migraine_mean, migraine_median, migraine_std):
+    def update_transformation_params(self, transformation_method, transformation_display, power, base, scaling_factor, migraine_mean, migraine_median, migraine_std, intensities_transformed):
         self.config.transformation_method = transformation_method
         self.config.transformation_display = transformation_display
         self.config.power = power
@@ -166,6 +166,7 @@ class Simulation:
         self.config.migraine_mean = migraine_mean
         self.config.migraine_median = migraine_median
         self.config.migraine_std = migraine_std
+        self.intensities_transformed = intensities_transformed
         self.calculate_migraine_data()
         self.calculate_adjusted_pain_units()
 
@@ -173,7 +174,7 @@ class Simulation:
         return {
             'config': self.config,
             'intensities': self.intensities,
-            'intensities_adjusted': self.intensities_adjusted,
+            'intensities_transformed': self.intensities_transformed,
             'group_data': self.group_data,
             'global_person_years': self.global_person_years,
             'global_std_person_years': self.global_std_person_years,
