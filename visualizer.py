@@ -258,6 +258,7 @@ class Visualizer:
 
         fig.update_layout(
             title=title,
+            xaxis_title='Pain Intensity',
             xaxis=xaxis_ticks,
             legend_title_text='',
             yaxis=dict(
@@ -276,8 +277,7 @@ class Visualizer:
                 bordercolor="white",
                 borderwidth=1
             ),
-            template='plotly_dark',
-            #height=450,
+            template='plotly_dark'
         )
 
         return fig
@@ -395,7 +395,7 @@ class Visualizer:
             # Update layout
             fig_intensities.update_layout(
                 title=title_transformation,
-                xaxis_title='Intensity',
+                xaxis_title='Pain Intensity',
                 yaxis_title='Adjusted Intensity',
                 template='plotly_dark',
                 xaxis=dict(
