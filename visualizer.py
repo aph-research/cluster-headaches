@@ -296,7 +296,7 @@ class Visualizer:
         fig_intensities = go.Figure()
 
         # Define the range for n_taylor
-        n_taylor_values = range(2, 26)
+        n_taylor_values = range(2, 36)
         n_taylor_crossing = 0
 
         intensities_transformed = None
@@ -306,35 +306,42 @@ class Visualizer:
         z_data_migraine = []
         z_data_cluster = []
 
-        # Storing the current method chosen in the UI before temporarily changing it to 'taylor'
-        method_simulation = self.simulation.config.transformation_method
-        display_simulation = self.simulation.config.transformation_display
-        self.simulation.config.transformation_method = 'taylor'
-        self.simulation.config.transformation_display = 'Taylor'
+        # Store the current configuration
+        original_transformation_method = self.simulation.config.transformation_method
+        original_transformation_display = self.simulation.config.transformation_display
+        original_n_taylor = self.simulation.config.n_taylor
 
         for n_taylor in n_taylor_values:
-            # Update the simulation with the current n_taylor value
+            # Temporarily change the configuration
+            self.simulation.config.transformation_method = 'taylor'
+            self.simulation.config.transformation_display = 'Taylor'
             self.simulation.config.n_taylor = n_taylor
-            self.simulation.calculate_adjusted_pain_units()
 
-            # Get the adjusted pain units for the current n_taylor value
+            # Recalculate adjusted pain units
+            self.simulation.calculate_adjusted_pain_units()
+            
             adjusted_pain_units_migraine = self.simulation.adjusted_pain_units_migraine[idx:]
             z_data_migraine.append(adjusted_pain_units_migraine)
             total_migraine_burden = sum(adjusted_pain_units_migraine)
             
             # Calculate the global adjusted pain units for cluster headaches
-            global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
-            adjusted_pain_units_cluster = global_person_years_ch_all_adjusted[idx:]
-            z_data_cluster.append(adjusted_pain_units_cluster)
-            total_cluster_burden = sum(adjusted_pain_units_cluster)
+            global_person_years_ch_all_adjusted = np.zeros_like(adjusted_pain_units_migraine)
+            for group in self.simulation.ch_groups.keys():
+                global_person_years_ch_all_adjusted += self.simulation.adjusted_pain_units[group][idx:]
+            
+            z_data_cluster.append(global_person_years_ch_all_adjusted)
+            total_cluster_burden = sum(global_person_years_ch_all_adjusted)
 
             if total_cluster_burden > total_migraine_burden and n_taylor_crossing == 0:
                 n_taylor_crossing = n_taylor
-                intensities_transformed = self.simulation.intensities_transformed
 
-        # Resetting the method and display to the current values in the UI
-        self.simulation.config.transformation_method = method_simulation
-        self.simulation.config.transformation_display = display_simulation
+        # Reset the original configuration
+        self.simulation.config.transformation_method = original_transformation_method
+        self.simulation.config.transformation_display = original_transformation_display
+        self.simulation.config.n_taylor = original_n_taylor
+
+        # Recalculate with original configuration
+        self.simulation.calculate_adjusted_pain_units()
 
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)
