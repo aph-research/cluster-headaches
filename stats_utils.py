@@ -189,21 +189,31 @@ def generate_max_pain_intensity(is_treated, size):
     sd_mild_moderate = 2.0
     mean_moderate_severe = 7.5
     sd_moderate_severe = 2.0
-    scale_very_severe = .7 if is_treated else 0.5
+    scale_very_severe = 0.7 if is_treated else 0.5
     
-    mild_to_moderate = truncnorm.rvs((0-mean_mild_moderate)/sd_mild_moderate, np.inf, loc=mean_mild_moderate, scale=sd_mild_moderate, size=size)
-    moderate_to_severe = truncnorm.rvs((0-mean_moderate_severe)/sd_moderate_severe, np.inf, loc=mean_moderate_severe, scale=sd_moderate_severe, size=size)
+    # Calculate the upper bounds in standard deviation units
+    upper_bound_mild_moderate = (10 - mean_mild_moderate) / sd_mild_moderate
+    upper_bound_moderate_severe = (10 - mean_moderate_severe) / sd_moderate_severe
+    
+    mild_to_moderate = truncnorm.rvs((0-mean_mild_moderate)/sd_mild_moderate, upper_bound_mild_moderate, 
+                                     loc=mean_mild_moderate, scale=sd_mild_moderate, size=size)
+    moderate_to_severe = truncnorm.rvs((0-mean_moderate_severe)/sd_moderate_severe, upper_bound_moderate_severe, 
+                                       loc=mean_moderate_severe, scale=sd_moderate_severe, size=size)
     very_severe = 10 - expon.rvs(scale=scale_very_severe, size=size)
     
     if is_treated:
+        # For treated patients:
         choices = np.random.choice(3, size=size, p=[0.40, 0.35, 0.25])
     else:
+        # For untreated patients:
         choices = np.random.choice(3, size=size, p=[0.20, 0.50, 0.30])
 
     intensities = np.where(choices == 0, mild_to_moderate,
                   np.where(choices == 1, moderate_to_severe, very_severe))
     
-    return np.round(np.clip(intensities, 0, 10), decimals=1)
+    intensities = np.ceil(intensities * 10) / 10
+
+    return intensities
 
 def transform_intensity(intensities, method='linear', power=2, max_value=1, base=10, scaling_factor=1.0, n_taylor = 10):
     if method == 'linear':

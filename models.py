@@ -91,7 +91,7 @@ class Patient:
     def calculate_intensity_minutes(self):
         intensity_minutes = {}
         for attack in self.attacks:
-            intensity = round(attack.max_intensity, 1)  # Round to nearest 0.1
+            intensity = attack.max_intensity
             intensity_minutes[intensity] = intensity_minutes.get(intensity, 0) + attack.max_intensity_duration
         return intensity_minutes
 
