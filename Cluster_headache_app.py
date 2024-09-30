@@ -160,15 +160,21 @@ def main():
 
         fig_migraine_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
         st.plotly_chart(fig_migraine_comparison)
-
-        fig_migraine_comparison_8 = visualizer.create_adjusted_pain_units_plot_comparison_migraine(pain_threshold=8)
-        st.plotly_chart(fig_migraine_comparison_8)
         
         fig_migraine_comparison_3d, fig_intensities = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
         st.plotly_chart(fig_migraine_comparison_3d)
         if fig_intensities.data:
             st.plotly_chart(fig_intensities)
 
+        pain_threshold = 8
+        fig_migraine_comparison_threshold = visualizer.create_adjusted_pain_units_plot_comparison_migraine(pain_threshold)
+
+        st.plotly_chart(fig_migraine_comparison_threshold)
+
+        fig_migraine_comparison_3d_threshold, fig_intensities_threshold = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d(pain_threshold)
+        st.plotly_chart(fig_migraine_comparison_3d_threshold)
+        if fig_intensities_threshold.data:
+            st.plotly_chart(fig_intensities_threshold)
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
 

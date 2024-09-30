@@ -277,20 +277,26 @@ class Visualizer:
                 borderwidth=1
             ),
             template='plotly_dark',
-            height=450,
+            #height=450,
         )
 
         return fig
     
-    def create_adjusted_pain_units_plot_comparison_migraine_3d(self):
-        pain_threshold = 8.0
+    def create_adjusted_pain_units_plot_comparison_migraine_3d(self, pain_threshold=0):
         idx = int(pain_threshold * 10)
+
+        if pain_threshold > 0:
+            title_3d = f"Annual Intensity-Adjusted Person-Years of ≥{int(pain_threshold)}/10 Pain: Migraine vs Cluster Headache"
+            title_transformation = f"Intensity Transformation for which ≥{int(pain_threshold)}/10 CH Burden > Migraine Burden"
+        else:
+            title_3d = f"Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache"
+            title_transformation = f"Intensity Transformation for which Total CH Burden > Migraine Burden"
         
         fig = go.Figure()
         fig_intensities = go.Figure()
 
         # Define the range for n_taylor
-        n_taylor_values = range(2, 41)
+        n_taylor_values = range(2, 26)
         n_taylor_crossing = 0
 
         intensities_transformed = None
@@ -300,6 +306,9 @@ class Visualizer:
         z_data_migraine = []
         z_data_cluster = []
 
+        # Storing the current method chosen in the UI before temporarily changing it to 'taylor'
+        method_simulation = self.simulation.config.transformation_method
+        display_simulation = self.simulation.config.transformation_display
         self.simulation.config.transformation_method = 'taylor'
         self.simulation.config.transformation_display = 'Taylor'
 
@@ -323,6 +332,10 @@ class Visualizer:
                 n_taylor_crossing = n_taylor
                 intensities_transformed = self.simulation.intensities_transformed
 
+        # Resetting the method and display to the current values in the UI
+        self.simulation.config.transformation_method = method_simulation
+        self.simulation.config.transformation_display = display_simulation
+
         # Convert z_data to a 2D arrays
         z_data_migraine = np.array(z_data_migraine)
         z_data_cluster = np.array(z_data_cluster)
@@ -334,7 +347,7 @@ class Visualizer:
             z=z_data_migraine,
             colorscale='Blues_r',
             name='Migraine',
-            opacity=0.9,
+            opacity=0.99,
             showscale=False,
             hovertemplate='Intensity: %{x}<br>Adj. Person-Years: %{z:,.0f}'
         ))
@@ -346,7 +359,7 @@ class Visualizer:
             z=z_data_cluster,
             colorscale='Sunsetdark',
             name='CH',
-            opacity=0.9,
+            opacity=0.7,
             showscale=False,
             hovertemplate='Intensity: %{x}<br>Adj. Person-Years: %{z:,.0f}'
         ))
@@ -381,7 +394,7 @@ class Visualizer:
 
             # Update layout
             fig_intensities.update_layout(
-                title='Intensity Transformation for which ≥8/10 CH Burden > Migraine Burden',
+                title=title_transformation,
                 xaxis_title='Intensity',
                 yaxis_title='Adjusted Intensity',
                 template='plotly_dark',
@@ -401,7 +414,7 @@ class Visualizer:
             )
 
         fig.update_layout(
-            title="Annual Intensity-Adjusted Person-Years of ≥8/10 Pain: Migraine vs Cluster Headache",
+            title=title_3d,
             scene=dict(
                 xaxis=dict(
                     title='Pain Intensity',
@@ -415,7 +428,8 @@ class Visualizer:
                 ),
                 zaxis=dict(
                     title='Adjusted Person-Years',
-                    tickformat=',.0f'
+                    tickformat=',.0f',
+                    #range=[0, np.min([100000, np.max([np.max(z_data_cluster), np.max(z_data_migraine)])])]
                 ),
                 aspectratio=dict(x=2, y=2, z=1)
             ),
