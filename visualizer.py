@@ -211,9 +211,17 @@ class Visualizer:
 
         return fig_adjusted
 
-    def create_adjusted_pain_units_plot_comparison_migraine(self):
-        pain_threshold = 8.0
+    def create_adjusted_pain_units_plot_comparison_migraine(self, pain_threshold=0):
         idx = int(pain_threshold * 10)
+
+        if pain_threshold > 0:
+            title = f"Annual Intensity-Adjusted Person-Years of ≥{int(pain_threshold)}/10 Pain: Migraine vs Cluster Headache <br>({self.simulation.config.transformation_display} Transformation)"
+            size = [8 for _ in self.intensities]
+            xaxis_ticks=dict(tickmode='array', dtick=0.1, range=[pain_threshold-0.1, 10.1])
+        else:
+            title = f"Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache <br>({self.simulation.config.transformation_display} Transformation)"
+            size = [8 if x.is_integer() else 0 for x in self.intensities]
+            xaxis_ticks=dict(tickmode='linear', tick0=0, dtick=1)
 
         global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
         
@@ -228,7 +236,7 @@ class Visualizer:
             line=dict(color=self.color_map['Episodic Untreated'], width=2),
             marker=dict(
                     symbol=self.marker_map['Episodic Untreated'],
-                    size = 8,
+                    size=size,
                     color=self.color_map['Episodic Untreated'],
                 ),
             hoverinfo='x+y+name'
@@ -242,19 +250,15 @@ class Visualizer:
             line=dict(color=self.color_map['Migraine'], width=2),
             marker=dict(
                     symbol=self.marker_map['Migraine'],
-                    size = 8,
+                    size=size,
                     color=self.color_map['Migraine'],
                 ),
             hoverinfo='x+y+name'
         ))
 
         fig.update_layout(
-            title=f"Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache ({self.simulation.config.transformation_display} Transformation)",
-            xaxis=dict(
-                title='Pain Intensity',
-                tickmode='array',
-                tickvals=self.intensities[idx:],  # Set tick values to the actual x values
-            ),
+            title=title,
+            xaxis=xaxis_ticks,
             legend_title_text='',
             yaxis=dict(
                 title='Intensity-Adjusted Person-Years',
@@ -272,8 +276,8 @@ class Visualizer:
                 bordercolor="white",
                 borderwidth=1
             ),
+            template='plotly_dark',
             height=450,
-            template='plotly_dark'
         )
 
         return fig

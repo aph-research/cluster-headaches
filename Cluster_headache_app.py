@@ -158,11 +158,14 @@ def main():
         fig_migraine = visualizer.plot_ch_vs_migraine_person_years()
         st.plotly_chart(fig_migraine)
 
-        fig_migrain_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
-        st.plotly_chart(fig_migrain_comparison)
+        fig_migraine_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
+        st.plotly_chart(fig_migraine_comparison)
+
+        fig_migraine_comparison_8 = visualizer.create_adjusted_pain_units_plot_comparison_migraine(pain_threshold=8)
+        st.plotly_chart(fig_migraine_comparison_8)
         
-        fig_migrain_comparison_3d, fig_intensities = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
-        st.plotly_chart(fig_migrain_comparison_3d)
+        fig_migraine_comparison_3d, fig_intensities = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
+        st.plotly_chart(fig_migraine_comparison_3d)
         if fig_intensities.data:
             st.plotly_chart(fig_intensities)
 
