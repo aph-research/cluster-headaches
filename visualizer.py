@@ -299,10 +299,9 @@ class Visualizer:
         n_taylor_values = range(2, 36)
         n_taylor_crossing = 0
 
-        intensities_transformed = None
-
         # Prepare data for 3D plot
         intensities = self.intensities[idx:]
+        intensities_transformed = self.intensities_transformed[idx:]
         z_data_migraine = []
         z_data_cluster = []
 
@@ -334,6 +333,7 @@ class Visualizer:
 
             if total_cluster_burden > total_migraine_burden and n_taylor_crossing == 0:
                 n_taylor_crossing = n_taylor
+                intensities_transformed = self.simulation.intensities_transformed[idx:]
 
         # Reset the original configuration
         self.simulation.config.transformation_method = original_transformation_method
@@ -390,11 +390,11 @@ class Visualizer:
             ))
             
             fig_intensities.add_trace(go.Scatter(
-                x=self.intensities,
+                x=intensities,
                 y=intensities_transformed,
                 mode='lines+markers',
                 marker=dict(
-                    size=[8 if x.is_integer() else 0 for x in self.intensities],
+                    size=[8 if x.is_integer() else 0 for x in intensities],
                 ),
                 name='Adjusted Intensities'
             ))
@@ -407,19 +407,14 @@ class Visualizer:
                 template='plotly_dark',
                 xaxis=dict(
                     tickmode='array',
-                    tickvals=[i for i in range(11)],
-                    ticktext=[str(i) for i in range(11)]
-                ),
-                yaxis=dict(
-                    tickmode='array',
-                    tickvals=[i/10 for i in range(11)],
-                    ticktext=[f'{i/10:.1f}' for i in range(11)]
+                    tickvals=[int(i) for i in intensities],
+                    ticktext=[str(int(i)) for i in intensities]
                 ),
                 # Make the plot square
                 height=550,
                 width=550,
             )
-
+        print(intensities_transformed)
         fig.update_layout(
             title=title_3d,
             scene=dict(
