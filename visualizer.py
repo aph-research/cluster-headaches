@@ -414,7 +414,7 @@ class Visualizer:
                 height=550,
                 width=550,
             )
-        print(intensities_transformed)
+
         fig.update_layout(
             title=title_3d,
             scene=dict(
