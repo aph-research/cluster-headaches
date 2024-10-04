@@ -18,8 +18,8 @@ class SimulationConfig:
     base: float = np.e
     n_taylor: int = 2
     scaling_factor: float = 1.0
-    migraine_mean: float = 5.4
-    migraine_median: float = 5.8
+    migraine_mean: float = 3.5
+    migraine_median: float = 3.7
     migraine_std: float = 1.0
     migraine_prevalence_percentage: float = 0.144
     migraine_fraction_of_year_in_attacks: float = .085
