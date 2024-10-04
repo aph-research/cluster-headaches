@@ -162,10 +162,12 @@ def generate_attacks_per_day(is_chronic, is_treated, max_daily_ch=np.inf, size=1
     return np.round(attacks).astype(int)
 
 def generate_chronic_active_days():
+    min_active_days = 1
+    max_active_days = 365
     while True:
-        active_days = int(lognorm.rvs(s=.5, scale=np.exp(np.log(200))))
-        active_days = min(active_days, 365)
-        return active_days
+        active_days = int(lognorm.rvs(s=.5, scale=np.exp(np.log(150))))
+        if min_active_days <= active_days <= max_active_days:
+            return active_days
 
 def generate_attack_duration(is_chronic, is_treated, max_intensities, size):
     mu = 4.0 + (0.3 if is_chronic else 0)
