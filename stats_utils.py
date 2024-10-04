@@ -203,8 +203,8 @@ def generate_max_pain_intensity(is_treated, size):
                                      loc=mean_mild_moderate, scale=sd_mild_moderate, size=size)
     moderate_to_severe = truncnorm.rvs((0-mean_moderate_severe)/sd_moderate_severe, upper_bound_moderate_severe, 
                                        loc=mean_moderate_severe, scale=sd_moderate_severe, size=size)
-    very_severe = 10 - expon.rvs(scale=scale_very_severe, size=size)
-    #very_severe = truncnorm.rvs((0-mean_severe)/sd_severe, upper_bound_severe, loc=mean_severe, scale=sd_severe, size=size)
+    #very_severe = 10 - expon.rvs(scale=scale_very_severe, size=size)
+    very_severe = truncnorm.rvs((0-mean_severe)/sd_severe, upper_bound_severe, loc=mean_severe, scale=sd_severe, size=size)
     
     if is_treated:
         # For treated patients:
