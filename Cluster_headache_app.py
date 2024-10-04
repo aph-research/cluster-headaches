@@ -16,7 +16,7 @@ def create_sidebar_inputs():
 
     annual_prevalence_per_100k = st.sidebar.slider("Annual prevalence (adults per 100,000)", 26, 95, 53, 1)
 
-    total_ch_sufferers = SimulationConfig.world_population * SimulationConfig.adult_fraction * (annual_prevalence_per_100k / 100000)
+    total_ch_sufferers = SimulationConfig.world_adult_population * (annual_prevalence_per_100k / 100000)
     
     st.sidebar.write(f"Total individuals with cluster headaches annually worldwide: {int(total_ch_sufferers):,}")
     

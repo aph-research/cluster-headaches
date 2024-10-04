@@ -3,8 +3,7 @@ import numpy as np
 
 @dataclass
 class SimulationConfig:
-    world_population: int = 8_200_000_000
-    adult_fraction: float = 0.72
+    world_adult_population: int = 5_728_759_000
     annual_prevalence_per_100k: int = 53
     prop_chronic: float = 0.20
     prop_episodic: float = 1 - prop_chronic

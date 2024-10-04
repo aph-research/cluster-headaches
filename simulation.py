@@ -30,8 +30,7 @@ class Simulation:
         self.calculate_results()
 
     def calculate_ch_groups(self):
-        annual_prevalence = self.config.annual_prevalence_per_100k / 100000
-        self.total_ch_sufferers = self.config.world_population * self.config.adult_fraction * annual_prevalence
+        self.total_ch_sufferers = self.config.world_adult_population * self.config.annual_prevalence_per_100k / 100_000
 
         self.ch_groups = {
             'Episodic Treated': int(self.total_ch_sufferers * self.config.prop_episodic * self.config.prop_treated),
