@@ -165,7 +165,7 @@ def generate_chronic_active_days():
     min_active_days = 1
     max_active_days = 365
     while True:
-        active_days = int(lognorm.rvs(s=1.0, scale=np.exp(np.log(50))))
+        active_days = int(lognorm.rvs(s=1.0, scale=np.exp(np.log(150))))
         if min_active_days <= active_days <= max_active_days:
             return active_days
 
