@@ -1,6 +1,6 @@
 import numpy as np
-from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, expon, skewnorm
-from scipy.optimize import minimize, curve_fit
+from scipy.stats import lognorm, gmean, rv_discrete, beta, truncnorm, skewnorm
+from scipy.optimize import minimize
 from dataclasses import dataclass
 
 def generate_bouts_per_year():
@@ -170,8 +170,8 @@ def generate_chronic_active_days():
             return active_days
 
 def generate_attack_duration(is_chronic, is_treated, max_intensities, size):
-    mu = 4.0 + (0.3 if is_chronic else 0)
-    sigma = 0.4
+    mu = 4.0 + (0.25 if is_chronic else 0)
+    sigma = 0.5
     
     base_durations = lognorm.rvs(s=sigma, scale=np.exp(mu), size=size)
     intensity_factor = 0.1064 * max_intensities + 0.5797
@@ -187,38 +187,60 @@ def generate_attack_duration(is_chronic, is_treated, max_intensities, size):
     
     return np.clip(np.round(adjusted_durations).astype(int), 15, 360)
 
-def generate_max_pain_intensity(is_treated, size):
-    mean_mild_moderate = 4.0
-    sd_mild_moderate = 2.0
-    mean_moderate_severe = 7.5
-    sd_moderate_severe = 2.0
-    scale_very_severe = 0.7 if is_treated else 0.5
-    mean_severe = 9.0
-    sd_severe = 1.0
+def weighted_beta_fit(data1, freq1, data2, freq2, weight1=0.5, weight2=0.5):
+    """
+    Fit a beta distribution to weighted data from two studies.
+    """
+    combined_data = np.concatenate([
+        np.repeat(data1, freq1),
+        np.repeat(data2, freq2)
+    ])
     
-    # Calculate the upper bounds in standard deviation units
-    upper_bound_mild_moderate = (10 - mean_mild_moderate) / sd_mild_moderate
-    upper_bound_moderate_severe = (10 - mean_moderate_severe) / sd_moderate_severe
-    upper_bound_severe = (10 - mean_severe) / sd_severe
+    weights = np.concatenate([
+        np.repeat(weight1, sum(freq1)),
+        np.repeat(weight2, sum(freq2))
+    ])
     
-    mild_to_moderate = truncnorm.rvs((0-mean_mild_moderate)/sd_mild_moderate, upper_bound_mild_moderate, 
-                                     loc=mean_mild_moderate, scale=sd_mild_moderate, size=size)
-    moderate_to_severe = truncnorm.rvs((0-mean_moderate_severe)/sd_moderate_severe, upper_bound_moderate_severe, 
-                                       loc=mean_moderate_severe, scale=sd_moderate_severe, size=size)
-    #very_severe = 10 - expon.rvs(scale=scale_very_severe, size=size)
-    very_severe = truncnorm.rvs((0-mean_severe)/sd_severe, upper_bound_severe, loc=mean_severe, scale=sd_severe, size=size)
+    # Normalize weights
+    weights = weights / np.sum(weights)
     
-    if is_treated:
-        # For treated patients:
-        choices = np.random.choice(3, size=size, p=[0.40, 0.35, 0.25])
-    else:
-        # For untreated patients:
-        choices = np.random.choice(3, size=size, p=[0.20, 0.50, 0.30])
+    # Define the negative log-likelihood function
+    def neg_log_likelihood(params):
+        a, b = params
+        return -np.sum(weights * beta.logpdf(combined_data / 10, a, b))
+    
+    # Use scipy's minimize to find the best parameters
+    result = minimize(neg_log_likelihood, [1, 1], method='L-BFGS-B', bounds=[(0.01, None), (0.01, None)])
+    
+    return result.x
 
-    intensities = np.where(choices == 0, mild_to_moderate,
-                  np.where(choices == 1, moderate_to_severe, very_severe))
-    
-    intensities = np.ceil(intensities * 10) / 10
+def generate_max_pain_intensity(is_treated, size, weight1=0.6, weight2=0.4):
+    def discretize(values, bins):
+        return np.digitize(values, bins) * 0.1
+
+    if not is_treated:
+        # Data for untreated patients
+        data1 = np.array([9.5, 7.5, 5.5, 3.5, 1.5])  # Study 1 (Russell)
+        freq1 = np.array([23, 17, 20, 5, 12])
+        data2 = np.array([9.5, 8.5, 7.5, 6.5])  # Study 2 (Torelli & Manzoni)
+        freq2 = np.array([29, 7, 3, 3])
+        
+        # Fit beta distribution with specified weights
+        a, b = weighted_beta_fit(data1, freq1, data2, freq2, weight1, weight2)
+        continuous_samples = beta.rvs(a, b, size=size) * 10
+    else:
+        # Parameters for treated patients (truncated normal distribution, Snoer data)
+        median = 7.3
+        q1, q3 = 5.9, 8.7
+        mean = median
+        std = (q3 - q1) / 1.34  # Approximate std from IQR
+        lower, upper = 0, 10
+        a, b = (lower - mean) / std, (upper - mean) / std
+        continuous_samples = truncnorm.rvs(a, b, loc=mean, scale=std, size=size)
+
+    # Discretize to 0.1 steps
+    bins = np.arange(0, 10.1, 0.1)
+    intensities = discretize(continuous_samples, bins)
 
     return intensities
 
