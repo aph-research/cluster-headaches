@@ -94,9 +94,14 @@ class Simulation:
                 global_average_intensity[group_name].append(patient.calculate_average_intensity())
 
             n_patients = len(group_patients)
-            intensity_minutes_average = [total_intensity_minutes.get(round(i, 1), 0) / n_patients for i in self.intensities]
-            intensity_minutes_std = [np.std(intensity_minutes_list[round(i, 1)]) if intensity_minutes_list[round(i, 1)] else 0 for i in self.intensities]
-            intensity_minutes_total = [total_intensity_minutes.get(round(i, 1), 0) for i in self.intensities]
+            if n_patients > 0:
+                intensity_minutes_average = [total_intensity_minutes.get(round(i, 1), 0) / n_patients for i in self.intensities]
+                intensity_minutes_std = [np.std(intensity_minutes_list[round(i, 1)]) if intensity_minutes_list[round(i, 1)] else 0 for i in self.intensities]
+                intensity_minutes_total = [total_intensity_minutes.get(round(i, 1), 0) for i in self.intensities]
+            else:
+                intensity_minutes_average = [0 for _ in self.intensities]
+                intensity_minutes_std = [0 for _ in self.intensities]
+                intensity_minutes_total = [0 for _ in self.intensities]
             
             group_data.append((group_name, intensity_minutes_average, intensity_minutes_std, intensity_minutes_total, n_patients))
 
