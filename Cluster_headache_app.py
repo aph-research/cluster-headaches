@@ -114,6 +114,7 @@ def main():
 
     if run_simulation:
         with st.spinner("Running simulation..."):
+            simulation = Simulation(config)
             simulation.run()
             st.session_state.simulation = simulation
             st.session_state.simulation_run = True
