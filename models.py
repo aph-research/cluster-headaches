@@ -15,6 +15,9 @@ class Attack:
     total_duration: int
     max_intensity: float
     max_intensity_duration: int
+    onset_duration_fraction: float = 0.15
+    offset_duration_fraction: float = 0.15
+    max_intensity_duration_fraction: float = 1-onset_duration_fraction-offset_duration_fraction
 
 class Patient:
     def __init__(self, is_chronic, is_treated):
@@ -42,7 +45,7 @@ class Patient:
         max_intensities = generate_max_pain_intensity(is_treated=self.is_treated, size=max_attacks)
         total_durations = generate_attack_duration(self.is_chronic, self.is_treated, max_intensities, size=max_attacks)
         # Assuming onset and offset phases take up 15% of the total attack duration each
-        max_intensity_durations = np.round(0.7 * total_durations).astype(int)
+        max_intensity_durations = np.round(Attack.max_intensity_duration_fraction * total_durations).astype(int)
 
         self.attack_pool = [Attack(total_durations[i], max_intensities[i], max_intensity_durations[i])
                             for i in range(max_attacks)]

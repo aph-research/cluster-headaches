@@ -101,7 +101,6 @@ def estimate_untreated(treated_mean, treated_std, treatment_effect=1.05):
     cv = treated_std / treated_mean  # Coefficient of variation
     untreated_mean = treated_mean * treatment_effect
     untreated_std = untreated_mean * cv
-    print(f"Estimated untreated mean: {untreated_mean:.2f}, untreated std: {untreated_std:.2f}")
     return untreated_mean, untreated_std
 
 @dataclass

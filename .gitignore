@@ -12,3 +12,4 @@ sim_stats
 /__pycache__
 profile_results.txt
 *.pyc
+.DS_Store

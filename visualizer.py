@@ -621,6 +621,7 @@ class Visualizer:
         self.results = new_results
 
     def create_3d_patient_scatter(self):
+        # Note that here we plot the total attack durations, not the time spent at the max intensity level (70% of total duration)
         # Prepare data
         data = []
         
@@ -628,7 +629,6 @@ class Visualizer:
             x = self.results['global_total_attacks'][group]
             y = self.results['global_total_attack_durations'][group]
             z = self.results['global_average_intensity'][group]
-            
             data.append(go.Scatter3d(
                 x=x,
                 y=y,
@@ -681,7 +681,6 @@ class Visualizer:
             ),
             template='plotly_dark'
         )
-
         return fig
     
     def plot_ch_vs_migraine_person_years(self):
@@ -719,7 +718,7 @@ class Visualizer:
                 ),
             hoverinfo='x+y+name'
         ))
-
+        
         fig.update_layout(
             title="Global Annual Person-Years of Pain: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',
