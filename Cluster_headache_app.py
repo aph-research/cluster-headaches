@@ -30,7 +30,9 @@ def create_sidebar_inputs():
     return SimulationConfig(
         annual_prevalence_per_100k=annual_prevalence_per_100k,
         prop_chronic=prop_chronic,
+        prop_episodic=1 - prop_chronic,
         prop_treated=prop_treated,
+        prop_untreated=1 - prop_treated,
         percent_of_patients_to_simulate=percent_of_patients_to_simulate,
     )
 
