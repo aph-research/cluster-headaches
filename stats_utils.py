@@ -213,9 +213,13 @@ def weighted_beta_fit(data1, freq1, data2, freq2, weight1=0.5, weight2=0.5):
     
     return result.x
 
-def generate_max_pain_intensity(is_treated, size, weight1=0.6, weight2=0.4):
+def generate_max_pain_intensity(is_treated, size, weight_study_1=0.5, weight_severe=0.7):
     def discretize(values, bins):
         return np.digitize(values, bins) * 0.1
+
+    weight_mild = 1 - weight_severe
+    n_severe = int(np.round(size * weight_severe))
+    n_mild = size - n_severe  # This ensures total samples equal size
 
     if not is_treated:
         # Data for untreated patients
@@ -223,19 +227,37 @@ def generate_max_pain_intensity(is_treated, size, weight1=0.6, weight2=0.4):
         freq1 = np.array([23, 17, 20, 5, 12])
         data2 = np.array([9.5, 8.5, 7.5, 6.5])  # Study 2 (Torelli & Manzoni)
         freq2 = np.array([29, 7, 3, 3])
+        weight_study_2 = 1 - weight_study_1
         
         # Fit beta distribution with specified weights
-        a, b = weighted_beta_fit(data1, freq1, data2, freq2, weight1, weight2)
-        continuous_samples = beta.rvs(a, b, size=size) * 10
+        a, b = weighted_beta_fit(data1, freq1, data2, freq2, weight_study_1, weight_study_2)
+        # continuous_samples = beta.rvs(a, b, size=size) * 10
+        severe_samples = beta.rvs(a, b, size=n_severe) * 10
+        mild_samples = beta.rvs(a * 0.7, b, size=n_mild) * 10
+        continuous_samples = np.concatenate([severe_samples, mild_samples])
     else:
         # Parameters for treated patients (truncated normal distribution, Snoer data)
-        median = 7.3
-        q1, q3 = 5.9, 8.7
-        mean = median
-        std = (q3 - q1) / 1.34  # Approximate std from IQR
+        median_severe = 7.3
+        q1_severe, q3_severe = 5.9, 8.7
+        mean_severe = median_severe
+        std_severe = (q3_severe - q1_severe) / 1.34  # Approximate std from IQR
+
+        # Parameters for milder attacks
+        mean_mild = mean_severe * 0.7
+        std_mild = std_severe * 1.2  # Slightly wider distribution for mild attacks
+
         lower, upper = 0, 10
-        a, b = (lower - mean) / std, (upper - mean) / std
-        continuous_samples = truncnorm.rvs(a, b, loc=mean, scale=std, size=size)
+        
+        # Generate samples for severe attacks
+        a_severe, b_severe = (lower - mean_severe) / std_severe, (upper - mean_severe) / std_severe
+        severe_samples = truncnorm.rvs(a_severe, b_severe, loc=mean_severe, scale=std_severe, size=n_severe)
+        
+        # Generate samples for mild attacks
+        a_mild, b_mild = (lower - mean_mild) / std_mild, (upper - mean_mild) / std_mild
+        mild_samples = truncnorm.rvs(a_mild, b_mild, loc=mean_mild, scale=std_mild, size=n_mild)
+        
+        # Combine the samples
+        continuous_samples = np.concatenate([severe_samples, mild_samples])
 
     # Discretize to 0.1 steps
     bins = np.arange(0, 10.1, 0.1)
