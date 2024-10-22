@@ -288,9 +288,36 @@ class Visualizer:
         if pain_threshold > 0:
             title_3d = f"Annual Intensity-Adjusted Person-Years of ≥{int(pain_threshold)}/10 Pain: Migraine vs Cluster Headache"
             title_transformation = f"Intensity Transformation for which ≥{int(pain_threshold)}/10 CH Burden > Migraine Burden"
+            updatemenus = []            
         else:
             title_3d = f"Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache"
             title_transformation = f"Intensity Transformation for which Total CH Burden > Migraine Burden"
+            updatemenus = [
+                dict(
+                    type="buttons",
+                    direction="right",
+                    buttons=list([
+                        dict(
+                            args=[{"scene.zaxis.range": [None, None]}],
+                            label="Full Range",
+                            method="relayout"
+                        ),
+                        dict(
+                            args=[{"scene.zaxis.range": [0, 15000]}],
+                            label="Truncate to 15,000",
+                            method="relayout"
+                        )
+                    ]),
+                    pad={"r": 10, "t": 10},
+                    showactive=True,
+                    x=0.0,
+                    xanchor="left",
+                    y=1.05,
+                    yanchor="top",
+                    bgcolor="#2c2c2c",  # Background color for all buttons
+                    font=dict(color="red"),  # Text color for all buttons
+                ),
+            ]
         
         fig = go.Figure()
         fig_intensities = go.Figure()
@@ -417,6 +444,7 @@ class Visualizer:
 
         fig.update_layout(
             title=title_3d,
+            updatemenus=updatemenus,
             scene=dict(
                 xaxis=dict(
                     title='Pain Intensity',
@@ -424,14 +452,12 @@ class Visualizer:
                 ),
                 yaxis=dict(
                     title='',
-                    tickvals=[n_taylor_values[0]-2, n_taylor_values[-1]-2],  # Show ticks at the first and last y values
+                    tickvals=[n_taylor_values[0]-2, n_taylor_values[-1]-2],
                     ticktext=['More linear', 'More exponential'],
-                    #showticklabels=False
                 ),
                 zaxis=dict(
                     title='Adjusted Person-Years',
                     tickformat=',.0f',
-                    #range=[0, np.min([100000, np.max([np.max(z_data_cluster), np.max(z_data_migraine)])])]
                 ),
                 aspectratio=dict(x=2, y=2, z=1)
             ),
@@ -442,7 +468,7 @@ class Visualizer:
             },
             template='plotly_dark',
             height=500,
-            margin=dict(l=0, r=0, t=30, b=30)
+            margin=dict(l=0, r=0, t=50, b=30)  # Increased top margin to accommodate the button
         )
 
         return fig, fig_intensities
