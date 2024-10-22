@@ -169,7 +169,7 @@ def main():
         if fig_intensities.data:
             st.plotly_chart(fig_intensities)
 
-        pain_threshold = 8
+        pain_threshold = 7.0
         fig_migraine_comparison_threshold = visualizer.create_adjusted_pain_units_plot_comparison_migraine(pain_threshold)
         st.plotly_chart(fig_migraine_comparison_threshold, use_container_width=True)
 
