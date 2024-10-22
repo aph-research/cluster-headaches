@@ -27,6 +27,8 @@ def create_sidebar_inputs():
                                                         0.01, 0.1, 0.02, 
                                                         format="%.2f%%")
 
+    theme = st.get_option('theme.base')
+
     return SimulationConfig(
         annual_prevalence_per_100k=annual_prevalence_per_100k,
         prop_chronic=prop_chronic,
@@ -34,6 +36,7 @@ def create_sidebar_inputs():
         prop_treated=prop_treated,
         prop_untreated=1 - prop_treated,
         percent_of_patients_to_simulate=percent_of_patients_to_simulate,
+        theme=theme
     )
 
 # Sidebar inputs for intensity scale transformation parameters

@@ -22,3 +22,4 @@ class SimulationConfig:
     migraine_std: float = 1.8
     migraine_prevalence_percentage: float = 0.144
     migraine_fraction_of_year_in_attacks: float = .085
+    theme: str = 'dark'

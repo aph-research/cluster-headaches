@@ -29,6 +29,8 @@ class Visualizer:
             'Chronic Untreated': 'circle',
             'Migraine': 'triangle-up'
         }
+        self.template = 'plotly_dark' if simulation.config.theme == 'dark' else 'plotly_white'
+        self.text_color ='white' if simulation.config.theme == 'dark' else 'black'
 
     def create_plot(self, data, title, y_title):
         fig = go.Figure()
@@ -79,11 +81,11 @@ class Visualizer:
             title=title,
             xaxis_title='Pain Intensity',
             yaxis_title=y_title,
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            yaxis=dict(tickformat=',.0f'),
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1, tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
+            yaxis=dict(tickformat=',.0f', tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
             legend_title_text='',
             hovermode='closest',
-            template='plotly_dark',
+            template=self.template,
             legend=dict(
                 itemsizing='constant',
                 itemwidth=30,
@@ -91,8 +93,8 @@ class Visualizer:
                 y=0.99,
                 xanchor="left",
                 x=0.01,
-                bgcolor="rgba(0,0,0,0.5)",
-                bordercolor="white",
+                #bgcolor="rgba(0,0,0,0.5)",
+                bordercolor="grey",
                 borderwidth=1
             )
         )
@@ -129,8 +131,9 @@ class Visualizer:
         fig.update_layout(
             title=title,
             yaxis_title=y_title,
-            template='plotly_dark',
-            yaxis=dict(tickformat=',.0f'),
+            template=self.template,
+            xaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
+            yaxis=dict(tickformat=',.0f', tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
             showlegend=False,
             bargap=0.3
         )
@@ -184,8 +187,9 @@ class Visualizer:
         fig.update_layout(
             title='Comparison of Total and ≥9/10 Intensity Person-Years Across All Groups',
             yaxis_title='Person-Years',
-            template='plotly_dark',
-            yaxis=dict(tickformat=',.0f'),
+            template=self.template,
+            xaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
+            yaxis=dict(tickformat=',.0f', tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
             showlegend=False,
             bargap=0.3
         )
@@ -217,11 +221,11 @@ class Visualizer:
         if pain_threshold > 0:
             title = f"Annual Intensity-Adjusted Person-Years of ≥{int(pain_threshold)}/10 Pain: Migraine vs Cluster Headache <br>({self.simulation.config.transformation_display} Transformation)"
             size = [8 for _ in self.intensities]
-            xaxis_ticks=dict(tickmode='array', dtick=0.1, range=[pain_threshold-0.1, 10.1])
+            xaxis_ticks=dict(tickmode='array', dtick=0.1, range=[pain_threshold-0.1, 10.1], tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color))
         else:
             title = f"Annual Intensity-Adjusted Person-Years of Pain: Migraine vs Cluster Headache <br>({self.simulation.config.transformation_display} Transformation)"
             size = [8 if x.is_integer() else 0 for x in self.intensities]
-            xaxis_ticks=dict(tickmode='linear', tick0=0, dtick=1)
+            xaxis_ticks=dict(tickmode='linear', tick0=0, dtick=1, tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color))
 
         global_person_years_ch_all_adjusted = sum(self.simulation.adjusted_pain_units[group] for group in self.simulation.adjusted_pain_units.keys())
         
@@ -263,7 +267,9 @@ class Visualizer:
             legend_title_text='',
             yaxis=dict(
                 title='Intensity-Adjusted Person-Years',
-                tickformat=',.0f'
+                tickformat=',.0f',
+                tickfont=dict(color=self.text_color), 
+                title_font=dict(color=self.text_color)
             ),
 
             legend=dict(
@@ -273,11 +279,11 @@ class Visualizer:
                 y=0.99,
                 xanchor="left",
                 x=0.01,
-                bgcolor="rgba(0,0,0,0.5)",
-                bordercolor="white",
+                #bgcolor="rgba(0,0,0,0.5)",
+                bordercolor="grey",
                 borderwidth=1
             ),
-            template='plotly_dark'
+            template=self.template
         )
 
         return fig
@@ -303,8 +309,8 @@ class Visualizer:
                             method="relayout"
                         ),
                         dict(
-                            args=[{"scene.zaxis.range": [0, 15000]}],
-                            label="Truncate to 15,000",
+                            args=[{"scene.zaxis.range": [0, 30000]}],
+                            label="Truncate to 30,000",
                             method="relayout"
                         )
                     ]),
@@ -431,12 +437,15 @@ class Visualizer:
                 title=title_transformation,
                 xaxis_title='Pain Intensity',
                 yaxis_title='Adjusted Intensity',
-                template='plotly_dark',
+                template=self.template,
                 xaxis=dict(
                     tickmode='array',
                     tickvals=[int(i) for i in intensities],
-                    ticktext=[str(int(i)) for i in intensities]
+                    ticktext=[str(int(i)) for i in intensities],
+                    tickfont=dict(color=self.text_color), 
+                    title_font=dict(color=self.text_color)
                 ),
+                yaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
                 # Make the plot square
                 height=550,
                 width=550,
@@ -448,16 +457,21 @@ class Visualizer:
             scene=dict(
                 xaxis=dict(
                     title='Pain Intensity',
-                    autorange='reversed'
+                    autorange='reversed',
+                    tickfont=dict(color=self.text_color),
+                    title_font=dict(color=self.text_color)
                 ),
                 yaxis=dict(
                     title='',
                     tickvals=[n_taylor_values[0]-2, n_taylor_values[-1]-2],
                     ticktext=['More linear', 'More exponential'],
+                    tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)
                 ),
                 zaxis=dict(
                     title='Adjusted Person-Years',
                     tickformat=',.0f',
+                    tickfont=dict(color=self.text_color), 
+                    title_font=dict(color=self.text_color),
                 ),
                 aspectratio=dict(x=2, y=2, z=1)
             ),
@@ -466,7 +480,7 @@ class Visualizer:
                 "center": {"x": 0.25, "y": 0.0, "z": -0.5},
                 "up": {"x": 0.0, "y": 0.0, "z": 1.0}
             },
-            template='plotly_dark',
+            template=self.template,
             height=500,
             margin=dict(l=0, r=0, t=50, b=30)  # Increased top margin to accommodate the button
         )
@@ -545,9 +559,9 @@ class Visualizer:
         return df
 
     def display_summary_table(self, df):
-        css = """
+        css = f"""
         <style>
-            .dataframe {
+            .dataframe {{
                 width: 100%;
                 text-align: right;
                 border-collapse: collapse;
@@ -556,8 +570,8 @@ class Visualizer:
                 background-color: #f8f8f8;
                 border-left: none;
                 border-right: none;
-            }
-            .dataframe th, .dataframe td {
+            }}
+            .dataframe th, .dataframe td {{
                 border-top: 1px solid #ddd;
                 border-bottom: 1px solid #ddd;
                 border-left: none;
@@ -567,72 +581,72 @@ class Visualizer:
                 word-wrap: break-word;
                 max-width: 150px;
                 text-align: center;
-            }
-            .table-title {
+            }}
+            .table-title {{
                 font-size: 1.0em;
                 font-weight: bold;
                 text-align: left;
                 margin-bottom: 0.5em;
-            }
-            .table-subtitle {
+            }}
+            .table-subtitle {{
                 font-size: 0.8em;
                 text-align: left;
                 margin-bottom: 1em;
-            }
-            .dataframe thead tr:nth-child(1) th {
+            }}
+            .dataframe thead tr:nth-child(1) th {{
                 background-color: #e0e0e0;
                 text-align: center;
                 font-weight: bold;
                 color: #333;
-            }
-            .dataframe thead tr:nth-child(2) th {
+            }}
+            .dataframe thead tr:nth-child(2) th {{
                 background-color: #e8e8e8;
                 text-align: center;
                 color: #333;
-            }
-            .dataframe tbody tr:nth-child(even) {
+            }}
+            .dataframe tbody tr:nth-child(even) {{
                 background-color: #f0f0f0;
-            }
-            .dataframe tbody tr:nth-child(odd) {
+            }}
+            .dataframe tbody tr:nth-child(odd) {{
                 background-color: #f8f8f8;
-            }
-            .dataframe tbody tr:hover {
+            }}
+            .dataframe tbody tr:hover {{
                 background-color: #e8e8e8;
-            }
-            .dataframe td:first-child, .dataframe th:first-child {
+            }}
+            .dataframe td:first-child, .dataframe th:first-child {{
                 text-align: left;
-            }
-            .table-note {
+            }}
+            .table-note {{
                 margin-top: 10px;
                 font-style: italic;
                 font-size: 0.9em;
-            }
-            .dataframe tr:last-child {
+            }}
+            .dataframe tr:last-child {{
                 font-weight: bold;
-            }
-            @media (prefers-color-scheme: dark) {
-                .dataframe, .table-note {
+            }}
+            @media (prefers-color-scheme: {self.simulation.config.theme}) {{
+                .dataframe, .table-note {{
                     color: #e0e0e0;
                     background-color: #2c2c2c;
-                }
-                .dataframe th, .dataframe td {
+                }}
+                .dataframe th, .dataframe td {{
                     border-color: #4a4a4a;
-                }
+                }}
                 .dataframe thead tr:nth-child(1) th,
-                .dataframe thead tr:nth-child(2) th {
+                .dataframe thead tr:nth-child(2) th {{
                     background-color: #3c3c3c;
                     color: #e0e0e0;
-                }
-                .dataframe tbody tr:nth-child(even) {
+                }}
+                .dataframe tbody tr:nth-child(even) {{
                     background-color: #323232;
-                }
-                .dataframe tbody tr:nth-child(odd) {
+                }}
+                .dataframe tbody tr:nth-child(odd) {{
                     background-color: #2c2c2c;
-                }
-                .dataframe tbody tr:hover {
+                }}
+                .dataframe tbody tr:hover {{
                     background-color: #3a3a3a;
-                }
-            }
+                }}
+            }}
         </style>
         """
         table_html = f"""
@@ -695,17 +709,20 @@ class Visualizer:
                 zaxis_title='Average Intensity',
                 aspectmode='manual',
                 aspectratio=dict(x=1, y=1, z=0.8),
-                camera=camera
+                camera=camera,
+                xaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
+                yaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
+                zaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
             ),
             margin=dict(t=40, b=0, l=0, r=0),
             autosize=True,
             legend=dict(
-                bordercolor='white',  # White border color
+                bordercolor='grey',  # White border color
                 borderwidth=1,  # Border width
                 itemsizing='constant',
                 itemwidth=30  # Adjust this value to change the size of legend markers
             ),
-            template='plotly_dark'
+            template=self.template,
         )
         return fig
     
@@ -748,7 +765,7 @@ class Visualizer:
         fig.update_layout(
             title="Global Annual Person-Years of Pain: Migraine vs Cluster Headache",
             xaxis_title='Pain Intensity',
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
+            xaxis=dict(tickmode='linear', tick0=0, dtick=1, tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),
             yaxis=dict(
                 title='Annual Person-Years: Migraine',
                 titlefont=dict(color=self.color_map['Migraine']),
@@ -771,11 +788,11 @@ class Visualizer:
                 y=0.99,
                 xanchor="left",
                 x=0.01,
-                bgcolor="rgba(0,0,0,0.5)",
-                bordercolor="white",
+                #bgcolor="rgba(0,0,0,0.5)",
+                bordercolor="grey",
                 borderwidth=1
             ),
-            template='plotly_dark'
+            template=self.template
         )
 
         return fig
