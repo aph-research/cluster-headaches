@@ -21,7 +21,7 @@ def create_sidebar_inputs():
     st.sidebar.write(f"Total individuals with cluster headaches annually worldwide: {int(total_ch_sufferers):,}")
     
     prop_chronic = st.sidebar.slider("Percentage of chronic cases", 0, 100, 20, format="%d%%") / 100
-    prop_treated = st.sidebar.slider("Percentage of treated cases", 0, 100, 48, format="%d%%") / 100
+    prop_treated = st.sidebar.slider("Percentage of treated cases", 0, 100, 43, format="%d%%") / 100
 
     percent_of_patients_to_simulate = st.sidebar.slider("Percentage of worldwide individuals to simulate", 
                                                         0.01, 0.1, 0.02, 
@@ -90,7 +90,7 @@ def create_migraine_inputs(config):
 def main():
     st.title("Global Burden of Cluster Headache Pain")
 
-    # set_random_seeds()
+    set_random_seeds()
 
     # Sidebar: configure simulation parameters
     config = create_sidebar_inputs()
@@ -125,25 +125,30 @@ def main():
     # If simulation has been run, process and display results
     if 'simulation_run' in st.session_state and st.session_state.simulation_run:
         visualizer = Visualizer(simulation)
+        fig_exports_all = {}
     
         # Visualization sections
         fig_avg = visualizer.create_average_minutes_plot()
         st.plotly_chart(fig_avg)
+        fig_exports_all['fig_avg'] = fig_avg
 
         fig_global = visualizer.create_global_person_years_plot()
         st.plotly_chart(fig_global)
+        fig_exports_all['fig_global'] = fig_global
         
         fig_3d_patients = visualizer.create_3d_patient_scatter()
         st.plotly_chart(fig_3d_patients, use_container_width=True)
 
         fig_total = visualizer.create_total_person_years_plot()
         st.plotly_chart(fig_total)
+        fig_exports_all['fig_total'] = fig_total
 
         fig_high_intensity = visualizer.create_high_intensity_person_years_plot()
         st.plotly_chart(fig_high_intensity)
 
         fig_comparison = visualizer.create_comparison_plot()
         st.plotly_chart(fig_comparison)
+        fig_exports_all['fig_comparison'] = fig_comparison
 
         simulation.update_transformation_params(config.transformation_method, 
                                                 config.transformation_display,
@@ -163,9 +168,11 @@ def main():
 
         fig_migraine = visualizer.plot_ch_vs_migraine_person_years()
         st.plotly_chart(fig_migraine)
+        fig_exports_all['fig_migraine'] = fig_migraine
 
         fig_migraine_comparison = visualizer.create_adjusted_pain_units_plot_comparison_migraine()
         st.plotly_chart(fig_migraine_comparison, use_container_width=True)
+        fig_exports_all['fig_migraine_comparison'] = fig_migraine_comparison
         
         fig_migraine_comparison_3d, fig_intensities = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d()
         st.plotly_chart(fig_migraine_comparison_3d, use_container_width=True)
@@ -175,11 +182,15 @@ def main():
         pain_threshold = 7.0
         fig_migraine_comparison_threshold = visualizer.create_adjusted_pain_units_plot_comparison_migraine(pain_threshold)
         st.plotly_chart(fig_migraine_comparison_threshold, use_container_width=True)
+        fig_exports_all['fig_migraine_comparison_threshold'] = fig_migraine_comparison_threshold
 
         fig_migraine_comparison_3d_threshold, fig_intensities_threshold = visualizer.create_adjusted_pain_units_plot_comparison_migraine_3d(pain_threshold)
         st.plotly_chart(fig_migraine_comparison_3d_threshold, use_container_width=True)
+        fig_exports_all['fig_migraine_comparison_3d_threshold'] = fig_migraine_comparison_3d_threshold
         if fig_intensities_threshold.data:
             st.plotly_chart(fig_intensities_threshold)
+            fig_exports_all['fig_intensities_threshold'] = fig_intensities_threshold
+        
     else:
         st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
 

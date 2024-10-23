@@ -157,9 +157,9 @@ class Simulation:
             self.config.migraine_median,
             self.config.migraine_std
         )
-        adjusted_global_population = 1_040_000_000 / 0.144
+        adjusted_global_population = 1_158_000_000 / 0.144
         total_migraine_sufferers = adjusted_global_population * self.config.migraine_prevalence_percentage
-        # Need to multiply by 0.1 since otherwise I get the distribution ony, but the time is the integral, with bin width 0.1
+        # Need to multiply by 0.1 since otherwise I get the distribution only, but the time is the integral, with bin width 0.1
         self.migraine_data['y'] = self.migraine_data['y'] * total_migraine_sufferers * self.config.migraine_fraction_of_year_in_attacks * 0.1
 
     def update_transformation_params(self, transformation_method, transformation_display, power, base, scaling_factor, migraine_mean, migraine_median, migraine_std):

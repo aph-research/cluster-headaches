@@ -93,7 +93,6 @@ class Visualizer:
                 y=0.99,
                 xanchor="left",
                 x=0.01,
-                #bgcolor="rgba(0,0,0,0.5)",
                 bordercolor="grey",
                 borderwidth=1
             )
@@ -164,16 +163,19 @@ class Visualizer:
     def create_comparison_plot(self):
         total_all_groups = sum(sum(years) for years in self.global_person_years.values())
         total_all_groups_std = np.sqrt(sum(sum(std**2) for std in self.global_std_person_years.values()))
+
+        intensity_all_groups_7 = sum(sum(years[70:]) for years in self.global_person_years.values())
+        intensity_all_groups_7_std = np.sqrt(sum(sum(std[70:]**2) for std in self.global_std_person_years.values()))        
+
+        intensity_all_groups_9 = sum(sum(years[90:]) for years in self.global_person_years.values())
+        intensity_all_groups_9_std = np.sqrt(sum(sum(std[90:]**2) for std in self.global_std_person_years.values()))
         
-        high_intensity_all_groups = sum(sum(years[90:]) for years in self.global_person_years.values())
-        high_intensity_all_groups_std = np.sqrt(sum(sum(std[90:]**2) for std in self.global_std_person_years.values()))
-        
-        bar_values = [total_all_groups, high_intensity_all_groups]
-        bar_errors = [total_all_groups_std, high_intensity_all_groups_std]
+        bar_values = [total_all_groups, intensity_all_groups_7, intensity_all_groups_9]
+        bar_errors = [total_all_groups_std, intensity_all_groups_7_std, intensity_all_groups_9_std]
         
         fig = go.Figure(data=[
             go.Bar(
-                x=['Total Person-Years', 'Person-Years at ≥9/10 Intensity'],
+                x=['Total Person-Years', 'Person-Years at ≥7/10 Intensity', 'Person-Years at ≥9/10 Intensity'],
                 y=bar_values,
                 error_y=dict(type='data', array=bar_errors, visible=True),
                 marker=dict(
@@ -185,7 +187,7 @@ class Visualizer:
         ])
 
         fig.update_layout(
-            title='Comparison of Total and ≥9/10 Intensity Person-Years Across All Groups',
+            title='Comparison of Total, ≥7/10, and ≥9/10 Intensity Person-Years Across All Groups',
             yaxis_title='Person-Years',
             template=self.template,
             xaxis=dict(tickfont=dict(color=self.text_color), title_font=dict(color=self.text_color)),

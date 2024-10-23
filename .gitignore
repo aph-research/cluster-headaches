@@ -13,3 +13,4 @@ sim_stats
 profile_results.txt
 *.pyc
 .DS_Store
+figs.py

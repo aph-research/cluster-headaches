@@ -7,7 +7,7 @@ class SimulationConfig:
     annual_prevalence_per_100k: int = 53
     prop_chronic: float = 0.20
     prop_episodic: float = 1 - prop_chronic
-    prop_treated: float = 0.48
+    prop_treated: float = 0.43
     prop_untreated: float = 1 - prop_treated
     percent_of_patients_to_simulate: float = 0.02
     transformation_method: str = 'linear'
