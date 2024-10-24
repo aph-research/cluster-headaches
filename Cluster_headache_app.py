@@ -90,7 +90,7 @@ def create_migraine_inputs(config):
 def main():
     st.title("Global Burden of Cluster Headache Pain")
 
-    set_random_seeds()
+    # set_random_seeds()
 
     # Sidebar: configure simulation parameters
     config = create_sidebar_inputs()
