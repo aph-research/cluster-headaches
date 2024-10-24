@@ -278,7 +278,7 @@ class Visualizer:
                 itemsizing='constant',
                 itemwidth=30,
                 yanchor="top",
-                y=0.99,
+                y=0.95,
                 xanchor="left",
                 x=0.01,
                 #bgcolor="rgba(0,0,0,0.5)",
