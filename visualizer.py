@@ -100,11 +100,11 @@ class Visualizer:
 
         return fig
 
-    def create_average_minutes_plot(self):
-        avg_data = [(name, avg, std) for name, avg, std, _, _ in self.group_data]
+    def create_average_hours_plot(self):
+        avg_data = [(name, np.array(avg)/60, np.array(std)/60) for name, avg, std, _, _ in self.group_data]
         return self.create_plot(avg_data, 
-                                'Average Minutes per Year Spent at Different Pain Intensities (±1σ)',
-                                'Average Minutes per Year')
+                                'Average Hours per Year Spent at Different Pain Intensities (±1σ)',
+                                'Average Hours per Year')
 
     def create_global_person_years_plot(self):
         global_data = [(name, self.global_person_years[name], self.global_std_person_years[name]) 
@@ -496,29 +496,29 @@ class Visualizer:
         table_data = []
         total_row = {
             'Group': 'Total',
-            'Average Patient': {key: 0 for key in ['Minutes', 'High-Intensity Minutes', 'Adjusted Units', 'High-Intensity Adjusted Units']},
+            'Average Patient': {key: 0 for key in ['Hours', 'High-Intensity Hours', 'Adjusted Units', 'High-Intensity Adjusted Units']},
             'Global Estimate': {key: 0 for key in ['Person-Years', 'High-Intensity Person-Years', 'Adjusted Units', 'High-Intensity Adjusted Units']}
         }
 
         for group in self.results['ch_groups'].keys():
             avg_data = next(avg for name, avg, _, _, _ in self.results['group_data'] if name == group)
-            avg_minutes = sum(avg_data)
-            avg_high_minutes = sum(avg_data[90:])
+            avg_hours = sum(avg_data)/60
+            avg_high_hours = sum(avg_data[90:])/60
             global_years = sum(self.results['global_person_years'][group])
             global_high_years = sum(self.results['global_person_years'][group][90:])
 
             self.simulation.global_person_years[group] = self.results['global_person_years'][group]
             self.simulation.intensities = self.results['intensities']
             global_adjusted_units = sum(self.simulation.adjusted_pain_units[group])
-            avg_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group])
-            avg_high_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group][90:])
+            avg_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group])/60
+            avg_high_adjusted_units = sum(self.simulation.adjusted_avg_pain_units[group][90:])/60
             global_high_adjusted_units = sum(self.simulation.adjusted_pain_units[group][90:])
             
             row = {
                 'Group': group,
                 'Average Patient': {
-                    'Minutes': avg_minutes,
-                    'High-Intensity Minutes': avg_high_minutes,
+                    'Hours': avg_hours,
+                    'High-Intensity Hours': avg_high_hours,
                     'Adjusted Units': avg_adjusted_units,
                     'High-Intensity Adjusted Units': avg_high_adjusted_units
                 },
@@ -541,8 +541,8 @@ class Visualizer:
         df_data = [
             {
                 'Group': row['Group'],
-                'Minutes': format_with_adjusted(row['Average Patient']['Minutes'], row['Average Patient']['Adjusted Units']),
-                'High-Intensity Minutes': format_with_adjusted(row['Average Patient']['High-Intensity Minutes'], row['Average Patient']['High-Intensity Adjusted Units']),
+                'Hours': format_with_adjusted(row['Average Patient']['Hours'], row['Average Patient']['Adjusted Units']),
+                'High-Intensity Hours': format_with_adjusted(row['Average Patient']['High-Intensity Hours'], row['Average Patient']['High-Intensity Adjusted Units']),
                 'Person-Years': format_with_adjusted(row['Global Estimate']['Person-Years'], row['Global Estimate']['Adjusted Units']),
                 'High-Intensity Person-Years': format_with_adjusted(row['Global Estimate']['High-Intensity Person-Years'], row['Global Estimate']['High-Intensity Adjusted Units'])
             }
@@ -552,8 +552,8 @@ class Visualizer:
         
         df.columns = pd.MultiIndex.from_tuples([
             ('', 'Group'),
-            ('Average Patient', 'Total Minutes in Pain'),
-            ('Average Patient', 'Minutes in ≥9/10 Pain'),
+            ('Average Patient', 'Total Hours in Pain'),
+            ('Average Patient', 'Hours in ≥9/10 Pain'),
             ('Global Estimate', 'Total Person-Years in Pain'),
             ('Global Estimate', 'Person-Years in ≥9/10 Pain')
         ])
@@ -670,6 +670,7 @@ class Visualizer:
         for group in ['Chronic Untreated', 'Chronic Treated', 'Episodic Untreated', 'Episodic Treated']:
             x = self.results['global_total_attacks'][group]
             y = self.results['global_total_attack_durations'][group]
+            y = np.array(y)/60
             z = self.results['global_average_intensity'][group]
             data.append(go.Scatter3d(
                 x=x,
@@ -686,7 +687,7 @@ class Visualizer:
                 hovertemplate=
                 '<b>%{text}</b><br><br>' +
                 'Total Attacks: %{x}<br>' +
-                'Total Duration: %{y} minutes<br>' +
+                'Total Duration: %{y:.0f} hours<br>' +
                 'Average Intensity: %{z:.1f}<extra></extra>',
                 text=[group] * len(x)
             ))
@@ -707,7 +708,7 @@ class Visualizer:
             title='Annual Cluster Headache Attack Data by Patient Group',
             scene=dict(
                 xaxis_title='Total Attacks',
-                yaxis_title='Total Duration (minutes)',
+                yaxis_title='Total Duration (Hours)',
                 zaxis_title='Average Intensity',
                 aspectmode='manual',
                 aspectratio=dict(x=1, y=1, z=0.8),

@@ -128,7 +128,7 @@ def main():
         fig_exports_all = {}
     
         # Visualization sections
-        fig_avg = visualizer.create_average_minutes_plot()
+        fig_avg = visualizer.create_average_hours_plot()
         st.plotly_chart(fig_avg)
         fig_exports_all['fig_avg'] = fig_avg
 
