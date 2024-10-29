@@ -192,7 +192,7 @@ def main():
             fig_exports_all['fig_intensities_threshold'] = fig_intensities_threshold
         
     else:
-        st.info('Please select your parameters (or leave the default ones) and then press "Run Simulation".')
+        st.info('Please select your simulation parameters in the left pane (or leave the default ones) and then press "Run Simulation".')
 
 # Run the app
 if __name__ == "__main__":
