@@ -438,7 +438,7 @@ class Visualizer:
             fig_intensities.update_layout(
                 title=title_transformation,
                 xaxis_title='Pain Intensity',
-                yaxis_title='Adjusted Intensity',
+                yaxis_title='Weight',
                 template=self.template,
                 xaxis=dict(
                     tickmode='array',
