@@ -224,7 +224,6 @@ def generate_max_pain_intensity(is_treated, size, weight_study_1=0.5, weight_sev
         data2 = np.array([9.5, 8.5, 7.5, 6.5])  # Study 2 (Torelli & Manzoni)
         freq2 = np.array([29, 7, 3, 3])
         weight_study_2 = 1 - weight_study_1
-        weight_mild = 1 - weight_severe
         n_severe = int(np.round(size * weight_severe))
         n_mild = size - n_severe
         # Calculate weighted mean
@@ -257,9 +256,8 @@ def generate_max_pain_intensity(is_treated, size, weight_study_1=0.5, weight_sev
     else:
         # Parameters for treated patients (truncated normal distribution, Snoer data)
         weight_severe = weight_severe * 0.8
-        weight_mild = 1 - weight_severe
         n_severe = int(np.round(size * weight_severe))
-        n_mild = size - n_severe  # This ensures total samples equal size
+        n_mild = size - n_severe
         median_severe = 7.3
         q1_severe, q3_severe = 5.9, 8.7
         mean_severe = median_severe
