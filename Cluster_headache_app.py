@@ -60,7 +60,7 @@ def create_intensity_scale_inputs(config):
             power = SimulationConfig.power
 
         if transformation_method == 'exponential':
-            base = st.number_input("Base", min_value=1.0, max_value=20.0, value=SimulationConfig.base, step=1.0)
+            base = st.number_input("Base", min_value=1.1, max_value=20.0, value=SimulationConfig.base, step=1.0)
             scaling_factor = st.number_input("Scaling factor", min_value=0.01, max_value=100.0, value=SimulationConfig.scaling_factor, step=0.01)
         else:
             base = SimulationConfig.base
@@ -190,6 +190,9 @@ def main():
         if fig_intensities_threshold.data:
             st.plotly_chart(fig_intensities_threshold)
             fig_exports_all['fig_intensities_threshold'] = fig_intensities_threshold
+        
+        fig_heatmap = visualizer.create_burden_ratio_heatmap()
+        st.plotly_chart(fig_heatmap)
         
     else:
         st.info('Please select your simulation parameters in the left pane (or leave the default ones) and then press "Run Simulation".')

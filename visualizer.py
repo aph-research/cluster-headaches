@@ -799,3 +799,107 @@ class Visualizer:
         )
 
         return fig
+
+    def create_burden_ratio_heatmap(self):
+        n_taylor_values = range(2, 25)
+        pain_thresholds = np.arange(0, 10.1, 0.5)
+        
+        original_transformation_method = self.simulation.config.transformation_method
+        original_transformation_display = self.simulation.config.transformation_display
+        original_n_taylor = self.simulation.config.n_taylor
+        
+        ratio_matrix = np.zeros((len(pain_thresholds), len(n_taylor_values)))
+        original_ratios = np.zeros_like(ratio_matrix)
+        
+        for i, threshold in enumerate(pain_thresholds):
+            idx = int(threshold * 10)
+            
+            for j, n_taylor in enumerate(n_taylor_values):
+                self.simulation.config.transformation_method = 'taylor'
+                self.simulation.config.transformation_display = 'Taylor'
+                self.simulation.config.n_taylor = n_taylor
+                
+                self.simulation.calculate_adjusted_pain_units()
+                
+                ch_burden = sum(sum(group[idx:]) for group in self.simulation.adjusted_pain_units.values())
+                migraine_burden = sum(self.simulation.adjusted_pain_units_migraine[idx:])
+                
+                if migraine_burden > 0:
+                    ratio = ch_burden / migraine_burden
+                    original_ratios[i, j] = ratio
+                    ratio_matrix[i, j] = np.log10(ratio) if ratio > 0 else np.nan
+                else:
+                    ratio_matrix[i, j] = np.nan
+                    original_ratios[i, j] = np.nan
+        
+        max_abs_val = max(abs(np.nanmin(ratio_matrix)), abs(np.nanmax(ratio_matrix)))
+        
+        fig = go.Figure(data=go.Heatmap(
+            x=list(n_taylor_values),
+            y=pain_thresholds,
+            z=ratio_matrix,
+            colorscale='RdBu',
+            zmid=0,
+            zmin=-max_abs_val,
+            zmax=max_abs_val,
+            colorbar=dict(
+                title=dict(
+                    text='log₁₀(CH:Migraine Burden Ratio)',
+                    font=dict(color=self.text_color)
+                ),
+                ticktext=[f'1/{10**i}' for i in range(int(max_abs_val), 0, -1)] +
+                        ['1'] +
+                        [f'{10**i}' for i in range(1, int(max_abs_val)+1)],
+                tickvals=[-i for i in range(int(max_abs_val), 0, -1)] +
+                        [0] +
+                        [i for i in range(1, int(max_abs_val)+1)],
+                tickfont=dict(color=self.text_color)  # Added this line
+            ),
+            hovertemplate='Taylor Terms: %{x}<br>' +
+                        'Pain Threshold: %{y:.1f}<br>' +
+                        'CH:Migraine Ratio: %{customdata:.3f}<extra></extra>',
+            customdata=original_ratios
+        ))
+        
+        fig.add_trace(go.Contour(
+            x=list(n_taylor_values),
+            y=pain_thresholds,
+            z=ratio_matrix,
+            contours=dict(
+                coloring='none',
+                showlabels=False,  # Changed to False
+                start=0,
+                end=0,
+                size=0
+            ),
+            line=dict(color='black', width=2),
+            showscale=False,
+            hoverinfo='skip'
+        ))
+        
+        fig.update_layout(
+            title='CH:Migraine Burden Ratio by Transformation Intensity Transformation and Pain Threshold',
+            xaxis=dict(
+                title='Intensity Scale Transformation',
+                ticktext=['More linear', 'More exponential'],
+                tickvals=[n_taylor_values[0], n_taylor_values[-1]],
+                tickfont=dict(color=self.text_color), 
+                title_font=dict(color=self.text_color)
+            ),
+            yaxis=dict(
+                title='Minimum Pain Intensity Threshold',
+                tickformat='.1f',
+                tickfont=dict(color=self.text_color), 
+                title_font=dict(color=self.text_color)
+            ),
+            width=800,
+            height=600,
+            template=self.template
+        )
+        
+        self.simulation.config.transformation_method = original_transformation_method
+        self.simulation.config.transformation_display = original_transformation_display
+        self.simulation.config.n_taylor = original_n_taylor
+        self.simulation.calculate_adjusted_pain_units()
+        
+        return fig
