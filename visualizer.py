@@ -903,3 +903,107 @@ class Visualizer:
         self.simulation.calculate_adjusted_pain_units()
         
         return fig
+    
+    def create_ceiling_effect_sensitivity_plot(self):
+        # Store original intensities
+        original_intensities = self.simulation.intensities.copy()
+        
+        # Define ranges
+        ceiling_thresholds = np.linspace(8, 9.5, 20)  # When to start applying ceiling adjustment
+        pain_thresholds = np.arange(0, 10.1, 0.5)
+        
+        ratio_matrix = np.zeros((len(pain_thresholds), len(ceiling_thresholds)))
+        original_ratios = np.zeros_like(ratio_matrix)
+        
+        try:
+            for i, threshold in enumerate(pain_thresholds):
+                idx = int(threshold * 10)
+                
+                for j, ceiling_threshold in enumerate(ceiling_thresholds):
+                    # Modify intensities to account for ceiling effects
+                    # Example: Linear extrapolation beyond the ceiling
+                    modified_intensities = original_intensities.copy()
+                    near_ceiling = modified_intensities >= ceiling_threshold
+                    
+                    # The closer to 10, the more we adjust
+                    adjustment_factor = (modified_intensities[near_ceiling] - ceiling_threshold) / (10 - ceiling_threshold)
+                    extra_intensity = adjustment_factor * 2  # Allow up to 2 points extra
+                    modified_intensities[near_ceiling] += extra_intensity
+                    
+                    # Update simulation intensities
+                    self.simulation.intensities = modified_intensities
+                    
+                    # Recalculate adjusted pain units with modified intensities
+                    self.simulation.calculate_adjusted_pain_units()
+                    
+                    # Calculate burden ratio
+                    ch_burden = sum(sum(group[idx:]) for group in self.simulation.adjusted_pain_units.values())
+                    migraine_burden = sum(self.simulation.adjusted_pain_units_migraine[idx:])
+                    
+                    if migraine_burden > 0:
+                        ratio = ch_burden / migraine_burden
+                        original_ratios[i, j] = ratio
+                        ratio_matrix[i, j] = np.log10(ratio) if ratio > 0 else np.nan
+                    else:
+                        ratio_matrix[i, j] = np.nan
+                        original_ratios[i, j] = np.nan
+                    
+        except Exception as e:
+            # Reset intensities and return None if any error occurs
+            self.simulation.intensities = original_intensities
+            self.simulation.calculate_adjusted_pain_units()
+            return None
+
+        # Reset to original intensities
+        self.simulation.intensities = original_intensities
+        self.simulation.calculate_adjusted_pain_units()
+        
+        # Create visualization
+        max_abs_val = max(abs(np.nanmin(ratio_matrix)), abs(np.nanmax(ratio_matrix)))
+        
+        fig = go.Figure(data=go.Heatmap(
+            x=ceiling_thresholds,
+            y=pain_thresholds,
+            z=ratio_matrix,
+            colorscale='RdBu',
+            zmid=0,
+            zmin=-max_abs_val,
+            zmax=max_abs_val,
+            colorbar=dict(
+                title=dict(
+                    text='log₁₀(CH:Migraine Burden Ratio)',
+                    font=dict(color=self.text_color)
+                ),
+                ticktext=[f'1/{10**i}' for i in range(int(max_abs_val), 0, -1)] +
+                        ['1'] +
+                        [f'{10**i}' for i in range(1, int(max_abs_val)+1)],
+                tickvals=[-i for i in range(int(max_abs_val), 0, -1)] +
+                        [0] +
+                        [i for i in range(1, int(max_abs_val)+1)],
+                tickfont=dict(color=self.text_color)
+            ),
+            hovertemplate='Ceiling Threshold: %{x:.1f}<br>' +
+                        'Pain Threshold: %{y:.1f}<br>' +
+                        'CH:Migraine Ratio: %{customdata:.3f}<extra></extra>',
+            customdata=original_ratios
+        ))
+        
+        fig.update_layout(
+            title='CH:Migraine Burden Ratio by Ceiling Effect Treatment and Pain Threshold',
+            xaxis=dict(
+                title='Pain Level Where Ceiling Effects Begin',
+                tickfont=dict(color=self.text_color), 
+                title_font=dict(color=self.text_color)
+            ),
+            yaxis=dict(
+                title='Minimum Pain Intensity Threshold',
+                tickformat='.1f',
+                tickfont=dict(color=self.text_color), 
+                title_font=dict(color=self.text_color)
+            ),
+            width=800,
+            height=600,
+            template=self.template
+        )
+        
+        return fig
