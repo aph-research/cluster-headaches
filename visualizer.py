@@ -872,9 +872,10 @@ class Visualizer:
                 end=0,
                 size=0
             ),
-            line=dict(color='black', width=2),
+            line=dict(color='grey', width=2),
             showscale=False,
-            hoverinfo='skip'
+            hoverinfo='skip',
+            name='Boundary where CH burden > migraine burden'  # Added name for legend
         ))
         
         fig.update_layout(
@@ -894,7 +895,18 @@ class Visualizer:
             ),
             width=800,
             height=600,
-            template=self.template
+            template=self.template,
+            showlegend=True,
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="right",
+                x=0.99,
+                font=dict(color=self.text_color),
+                #bgcolor='rgba(255, 255, 255, 0.7)',  # White with 0.7 opacity
+                bordercolor="grey",
+                borderwidth=1
+            )
         )
         
         self.simulation.config.transformation_method = original_transformation_method
