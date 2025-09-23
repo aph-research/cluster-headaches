@@ -26,11 +26,6 @@ try:
     )
     print("Page is loaded. Title is: ", driver.title)
     
-    # You can add more interactions here if needed
-    # For example:
-    # button = driver.find_element(By.ID, "some-button-id")
-    # button.click()
-    
 except Exception as e:
     print("An error occurred:", str(e))
 
